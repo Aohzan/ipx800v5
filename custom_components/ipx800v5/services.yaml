@@ -1,0 +1,31 @@
+create_push_object:
+  name: Create PUSH object
+  description: Create a configured PUSH object on your IPX800 V5. See documentation to know how to get the auth token, and set your IPX800V5 to call the PUSH
+  fields:
+    auth_token:
+      name: Auth Token
+      description: Needed for creation/update of an object, level 2 or more
+      required: true
+      selector:
+        text:
+    entity_id:
+      name: Entity
+      description: The entity that should be updated by the PUSH
+      required: true
+      example: binary_sensor.detecteur_garage
+      selector:
+        entity:
+          integration: ipx800v5
+    homeassistant_ip:
+      name: Home-Assistant IP
+      description: The IP address of Home-Assistant
+      required: true
+      selector:
+        text:
+    homeassistant_port:
+      name: Home-Assistant Port
+      description: The HTTP port of Home-Assistant
+      required: true
+      default: "8123"
+      selector:
+        text:

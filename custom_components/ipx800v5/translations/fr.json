@@ -1,0 +1,110 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "GCE IPX800 V5",
+        "description": "Pour une configuration avancée en yaml, voir la documentation : https://github.com/Aohzan/ipx800v5.",
+        "data": {
+          "name": "Nom de l'IPX800 V5",
+          "host": "IP",
+          "port": "Port",
+          "api_key": "Clé API"
+        }
+      },
+      "params": {
+        "title": "Options de l'IPX800 V5",
+        "description": "Ajustez les paramètres en fonctions des extensions détectées",
+        "data": {
+          "api_key": "Clé API",
+          "scan_interval": "Interval de mise à jour (en secondes)",
+          "push_password": "Mot de passe pour activer les PUSH depuis l'IPX800 (optionel)",
+          "ipx_0_1": "IPX800 - Type du relais 1",
+          "ipx_0_2": "IPX800 - Type du relais 2",
+          "ipx_0_3": "IPX800 - Type du relais 3",
+          "ipx_0_4": "IPX800 - Type du relais 4",
+          "ipx_0_5": "IPX800 - Type du relais 5",
+          "ipx_0_6": "IPX800 - Type du relais 6",
+          "ipx_0_7": "IPX800 - Type du relais 7",
+          "ipx_0_8": "IPX800 - Type du relais 8",
+          "x8r_1_1": "X-8R N°1 - Type du relais 1",
+          "x8r_1_2": "X-8R N°1 - Type du relais 2",
+          "x8r_1_3": "X-8R N°1 - Type du relais 3",
+          "x8r_1_4": "X-8R N°1 - Type du relais 4",
+          "x8r_1_5": "X-8R N°1 - Type du relais 5",
+          "x8r_1_6": "X-8R N°1 - Type du relais 6",
+          "x8r_1_7": "X-8R N°1 - Type du relais 7",
+          "x8r_1_8": "X-8R N°1 - Type du relais 8",
+          "x8r_2_1": "X-8R N°2 - Type du relais 1",
+          "x8r_2_2": "X-8R N°2 - Type du relais 2",
+          "x8r_2_3": "X-8R N°2 - Type du relais 3",
+          "x8r_2_4": "X-8R N°2 - Type du relais 4",
+          "x8r_2_5": "X-8R N°2 - Type du relais 5",
+          "x8r_2_6": "X-8R N°2 - Type du relais 6",
+          "x8r_2_7": "X-8R N°2 - Type du relais 7",
+          "x8r_2_8": "X-8R N°2 - Type du relais 8",
+          "x8r_3_1": "X-8R N°3 - Type du relais 1",
+          "x8r_3_2": "X-8R N°3 - Type du relais 2",
+          "x8r_3_3": "X-8R N°3 - Type du relais 3",
+          "x8r_3_4": "X-8R N°3 - Type du relais 4",
+          "x8r_3_5": "X-8R N°3 - Type du relais 5",
+          "x8r_3_6": "X-8R N°3 - Type du relais 6",
+          "x8r_3_7": "X-8R N°3 - Type du relais 7",
+          "x8r_3_8": "X-8R N°3 - Type du relais 8"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Problème d'autorisation, vérifiez la clé API",
+      "cannot_connect": "Impossible de se connecter à l'IPX800, vérifier l'IP et le port",
+      "unknown": "Erreur inconnue"
+    },
+    "abort": {
+      "already_configured": "L'IPX800 V5 avec cette adresse IP est déjà configuré"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options de l'IPX800 V5",
+        "description": "Ajustez les paramètres en fonctions des extensions détectées",
+        "data": {
+          "api_key": "Clé API",
+          "scan_interval": "Interval de mise à jour (en secondes)",
+          "push_password": "Mot de passe pour activer les PUSH depuis l'IPX800 (optionel)",
+          "ipx_0_1": "IPX800 - Type du relais 1",
+          "ipx_0_2": "IPX800 - Type du relais 2",
+          "ipx_0_3": "IPX800 - Type du relais 3",
+          "ipx_0_4": "IPX800 - Type du relais 4",
+          "ipx_0_5": "IPX800 - Type du relais 5",
+          "ipx_0_6": "IPX800 - Type du relais 6",
+          "ipx_0_7": "IPX800 - Type du relais 7",
+          "ipx_0_8": "IPX800 - Type du relais 8",
+          "x8r_1_1": "X-8R N°1 - Type du relais 1",
+          "x8r_1_2": "X-8R N°1 - Type du relais 2",
+          "x8r_1_3": "X-8R N°1 - Type du relais 3",
+          "x8r_1_4": "X-8R N°1 - Type du relais 4",
+          "x8r_1_5": "X-8R N°1 - Type du relais 5",
+          "x8r_1_6": "X-8R N°1 - Type du relais 6",
+          "x8r_1_7": "X-8R N°1 - Type du relais 7",
+          "x8r_1_8": "X-8R N°1 - Type du relais 8",
+          "x8r_2_1": "X-8R N°2 - Type du relais 1",
+          "x8r_2_2": "X-8R N°2 - Type du relais 2",
+          "x8r_2_3": "X-8R N°2 - Type du relais 3",
+          "x8r_2_4": "X-8R N°2 - Type du relais 4",
+          "x8r_2_5": "X-8R N°2 - Type du relais 5",
+          "x8r_2_6": "X-8R N°2 - Type du relais 6",
+          "x8r_2_7": "X-8R N°2 - Type du relais 7",
+          "x8r_2_8": "X-8R N°2 - Type du relais 8",
+          "x8r_3_1": "X-8R N°3 - Type du relais 1",
+          "x8r_3_2": "X-8R N°3 - Type du relais 2",
+          "x8r_3_3": "X-8R N°3 - Type du relais 3",
+          "x8r_3_4": "X-8R N°3 - Type du relais 4",
+          "x8r_3_5": "X-8R N°3 - Type du relais 5",
+          "x8r_3_6": "X-8R N°3 - Type du relais 6",
+          "x8r_3_7": "X-8R N°3 - Type du relais 7",
+          "x8r_3_8": "X-8R N°3 - Type du relais 8"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "GCE IPX800 V5",
+  "country": "FR",
+  "domains": [
+    "switch",
+    "light",
+    "cover",
+    "sensor",
+    "binary_sensor",
+    "climate",
+    "number",
+    "button"
+  ],
+  "render_readme": true,
+  "iot_class": ["Local Polling"]
+}
