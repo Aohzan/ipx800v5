@@ -67,7 +67,9 @@ def check_devices_config(devices_config: list) -> list:
     return devices
 
 
-def get_device_in_devices_config(devices_config: list, device_auto: dict) -> dict:
+def get_device_in_devices_config(
+    devices_config: list, device_auto: dict, use_device_name_as_ext_name: bool = False
+) -> dict:
     """Build a device config from config and automatic config."""
     device = None
     # Filter on base keys
@@ -106,7 +108,9 @@ def get_device_in_devices_config(devices_config: list, device_auto: dict) -> dic
                 break
     if device is not None:
         _LOGGER.debug("Found custom config for device %s", device[CONF_NAME])
-        if CONF_EXT_NAME not in device:
+        if use_device_name_as_ext_name:
+            device[CONF_EXT_NAME] = device[CONF_NAME]
+        elif CONF_EXT_NAME not in device:
             device[CONF_EXT_NAME] = device_auto.get(CONF_EXT_NAME, device[CONF_NAME])
         return dict(device)
     return device_auto
@@ -363,6 +367,7 @@ def build_objects_entities(
                             CONF_EXT_NUMBER: obj_number,
                             CONF_EXT_NAME: obj[API_CONFIG_NAME],
                         },
+                        True,
                     )
                     entities.append(main_entity)
                     entities.append(
@@ -385,6 +390,7 @@ def build_objects_entities(
                                 CONF_EXT_NUMBER: obj_number,
                                 CONF_EXT_NAME: obj[API_CONFIG_NAME],
                             },
+                            True,
                         )
                     )
                 elif obj_type == OBJECT_TEMPO:
@@ -397,6 +403,7 @@ def build_objects_entities(
                             CONF_EXT_NUMBER: obj_number,
                             CONF_EXT_NAME: obj[API_CONFIG_NAME],
                         },
+                        True,
                     )
                     entities.append(main_entity)
                     entities.append(

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1
+
+- Fix device name for objects entities
+- Add exceptions handling on setup
+
 ## 0.3.0
 
 - /!\ Need Home-Assistant 2021.12 or later

@@ -130,10 +130,16 @@ async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry) -> bool
             raise IPX800CannotConnectError()
     except IPX800CannotConnectError as exception:
         _LOGGER.error(
-            "Cannot connect to the %s IPX800 V5, check host, port and API key",
+            "Cannot connect to the %s IPX800 V5, check host and port",
             config[CONF_HOST],
         )
         raise ConfigEntryNotReady from exception
+    except IPX800InvalidAuthError:
+        _LOGGER.error("Authentication error, check API Key")
+        return False
+    except Exception as exception:
+        _LOGGER.error("unknown error: %s", exception)
+        return False
 
     await ipx.init_config()
 
@@ -270,7 +276,7 @@ async def async_unload_entry(hass: HomeAssistantType, entry: ConfigEntry) -> boo
 
     hass.data[DOMAIN][entry.entry_id][UNDO_UPDATE_LISTENER]()
 
-    del hass.data[DOMAIN]
+    hass.data[DOMAIN].pop(entry.entry_id)
 
     return True
 
