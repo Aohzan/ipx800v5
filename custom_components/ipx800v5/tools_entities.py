@@ -125,26 +125,28 @@ def build_ipx_system_entities(ipx: IPX800) -> list:
             CONF_EXT_TYPE: IPX,
             CONF_EXT_NUMBER: 0,
             CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_SYSTEM,
-        },
-        {
-            CONF_NAME: "IPX800 Heap Free",
-            CONF_COMPONENT: "sensor",
-            CONF_EXT_TYPE: IPX,
-            CONF_EXT_NUMBER: 0,
-            CONF_TYPE: TYPE_ANA,
-            CONF_ID: ipx.ipx_config[ipx.ana_heap_free_id],
-            CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_DIAGNOSTIC,
-        },
-        {
-            CONF_NAME: "IPX800 Delta Heap Free",
-            CONF_COMPONENT: "sensor",
-            CONF_EXT_TYPE: IPX,
-            CONF_EXT_NUMBER: 0,
-            CONF_TYPE: TYPE_ANA,
-            CONF_ID: ipx.ipx_config[ipx.ana_delta_heap_free_id],
-            CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_DIAGNOSTIC,
-        },
+        }
     ]
+    # Add all diagnostic entities
+    for key, value in ipx.ipx_config.items():
+        key = str(key).removesuffix("_id")  # type: ignore
+        if key.startswith("anaIPX") or key in [
+            "anaHeapFree",
+            "anaDeltaHeapFree",
+            "anaMonitorConnections",
+        ]:
+            name = key.removeprefix("ana")
+            entities.append(
+                {
+                    CONF_NAME: f"IPX800 {name}",
+                    CONF_COMPONENT: "sensor",
+                    CONF_EXT_TYPE: IPX,
+                    CONF_EXT_NUMBER: 0,
+                    CONF_TYPE: TYPE_ANA,
+                    CONF_ID: value,
+                    CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_DIAGNOSTIC,
+                }
+            )
     if ipx.io_acpower_id in ipx.ipx_config:
         entities.append(
             {
@@ -374,6 +376,15 @@ def build_objects_entities(
                         {
                             CONF_NAME: main_entity[CONF_NAME],
                             CONF_COMPONENT: "number",
+                            CONF_EXT_TYPE: main_entity[CONF_EXT_TYPE],
+                            CONF_EXT_NUMBER: main_entity[CONF_EXT_NUMBER],
+                            CONF_EXT_NAME: main_entity[CONF_EXT_NAME],
+                        }
+                    )
+                    entities.append(
+                        {
+                            CONF_NAME: main_entity[CONF_NAME],
+                            CONF_COMPONENT: "binary_sensor",
                             CONF_EXT_TYPE: main_entity[CONF_EXT_TYPE],
                             CONF_EXT_NUMBER: main_entity[CONF_EXT_NUMBER],
                             CONF_EXT_NAME: main_entity[CONF_EXT_NAME],
