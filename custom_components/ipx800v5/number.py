@@ -2,13 +2,17 @@
 import logging
 from typing import List
 
-from pypx800v5 import IPX800, Counter, Thermostat
+from pypx800v5 import IPX800, Counter, Tempo, Thermostat
 from pypx800v5.const import OBJECT_COUNTER, OBJECT_TEMPO, OBJECT_THERMOSTAT, TYPE_ANA
-from pypx800v5.tempo import Tempo
 
 from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_TYPE, ENTITY_CATEGORY_CONFIG
+from homeassistant.const import (
+    CONF_TYPE,
+    DEVICE_CLASS_TEMPERATURE,
+    ENTITY_CATEGORY_CONFIG,
+    TEMP_CELSIUS,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
@@ -52,7 +56,7 @@ async def async_setup_entry(
 
 
 class AnalogNumber(IpxEntity, NumberEntity):
-    """Representation of an analog as a sensor."""
+    """Representation of an analog as a number."""
 
     @property
     def native_value(self):
@@ -111,6 +115,8 @@ class ThermostatParamNumber(IpxEntity, NumberEntity):
         )
         self.control = Thermostat(ipx, self._ext_number)
         self._attr_entity_category = ENTITY_CATEGORY_CONFIG
+        self._attr_device_class = DEVICE_CLASS_TEMPERATURE
+        self._attr_native_unit_of_measurement = TEMP_CELSIUS
         self._param = param
         self._value = self.control._config[f"setPoint{param}"]
         self._attr_mode = NumberMode.BOX

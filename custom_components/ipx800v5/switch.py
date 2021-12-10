@@ -2,9 +2,8 @@
 import logging
 from typing import List
 
-from pypx800v5 import IPX800, X8R, IPX800Relay
+from pypx800v5 import IPX800, X8R, IPX800Relay, Tempo
 from pypx800v5.const import EXT_X8R, IPX, OBJECT_TEMPO, TYPE_IO
-from pypx800v5.tempo import Tempo
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
