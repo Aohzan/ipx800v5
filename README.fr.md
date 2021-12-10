@@ -26,7 +26,7 @@ L'intégration `ipx800v5` vous permet de contrôler et récupérer des informati
   - Tempo via `binary_sensor`, `switch` pour l'activer ou non et `number` pour régler la temporisation [`tempo`]
 - Entités spécifiques (en yaml uniquement via l'attribut `type`)
   - `io` via `switch` ou `binary_sensor`
-  - `ana` via `sensor`
+  - `ana` via `sensor` ou `number`
   - `xpwm_rgb` et `xpwm_rgbw` via `light` pour piloter une lumière et sa couleur via plusieurs canaux PWM
 
 ## Installation

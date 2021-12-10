@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0
+
+- Add all IPX diagnostic entities
+- Add binary sensor for thermostat fault
+- bump pypx800v5
+
 ## 0.3.1
 
 - Fix device name for objects entities
