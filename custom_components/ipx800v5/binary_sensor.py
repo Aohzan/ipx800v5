@@ -2,9 +2,16 @@
 import logging
 from typing import List
 
-from pypx800v5 import IPX800, X8D, X8R, X24D, IPX800DigitalInput
-from pypx800v5.const import EXT_X8D, EXT_X8R, EXT_X24D, IPX, OBJECT_TEMPO, TYPE_IO
-from pypx800v5.tempo import Tempo
+from pypx800v5 import IPX800, X8D, X8R, X24D, IPX800DigitalInput, Tempo, Thermostat
+from pypx800v5.const import (
+    EXT_X8D,
+    EXT_X8R,
+    EXT_X24D,
+    IPX,
+    OBJECT_TEMPO,
+    OBJECT_THERMOSTAT,
+    TYPE_IO,
+)
 
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
@@ -45,6 +52,10 @@ async def async_setup_entry(
             entities.append(X8DBinarySensor(device, controller, coordinator))
         elif device[CONF_EXT_TYPE] == OBJECT_TEMPO:
             entities.append(TempoStateBinarySensor(device, controller, coordinator))
+        elif device[CONF_EXT_TYPE] == OBJECT_THERMOSTAT:
+            entities.append(
+                ThermostatFaultStateBinarySensor(device, controller, coordinator)
+            )
 
     async_add_entities(entities, True)
 
@@ -136,3 +147,19 @@ class X8RLongPushBinarySensor(IpxEntity, BinarySensorEntity):
     def is_on(self) -> bool:
         """Return the current value."""
         return self.coordinator.data[self.control.io_longpush_id]["on"] is True
+
+
+class ThermostatFaultStateBinarySensor(IpxEntity, BinarySensorEntity):
+    """Representation the thermostat error state as a binary sensor."""
+
+    def __init__(
+        self, device_config: dict, ipx: IPX800, coordinator: DataUpdateCoordinator
+    ) -> None:
+        """Initialize the sensor of the tempo."""
+        super().__init__(device_config, ipx, coordinator, suffix_name="Fault")
+        self.control = Thermostat(ipx, self._ext_number)
+
+    @property
+    def is_on(self) -> bool:
+        """Return the current value."""
+        return self.coordinator.data[self.control.io_fault_id]["on"] is True
