@@ -7,11 +7,11 @@ The `ipx800v5` integration allows you to get information and control the [IPX800
 
 ## Installation
 
-<!--
+
 ### HACS
 
 HACS > Integrations > Explore & Add Repositories > GCE IPX800 V5 > Install this repository
--->
+
 
 ### Manually
 

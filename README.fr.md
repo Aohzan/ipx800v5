@@ -31,11 +31,9 @@ L'intégration `ipx800v5` vous permet de contrôler et récupérer des informati
 
 ## Installation
 
-<!--
 ### HACS
 
-HACS > Integrations > Explore & Add Repositories > GCE IPX800 V5 > Install this repository
--->
+HACS > Intégrations > Explorer & Ajouter des repos > GCE IPX800 V5 > Installer ce repository
 
 ### Manually
 
