@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0
+
+- Temporary fix for turning off X-8R and X-Dimmer switch/light
+
 ## 0.4.0
 
 - Add all IPX diagnostic entities

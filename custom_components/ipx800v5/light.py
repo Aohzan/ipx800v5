@@ -147,6 +147,8 @@ class X8RLight(IpxEntity, LightEntity):
 
     async def async_turn_off(self, **kwargs) -> None:
         """Turn off the light."""
+        # temp fix: turn on the light to force api state to on before turning off
+        await self.control.on()
         await self.control.off()
         await self.coordinator.async_request_refresh()
 
@@ -199,6 +201,8 @@ class XDimmerLight(IpxEntity, LightEntity):
         """Turn off the light."""
         if ATTR_TRANSITION in kwargs:
             self._transition = kwargs[ATTR_TRANSITION]
+        # temp fix: turn on the light to force api state to on before turning off
+        await self.control.on()
         await self.control.off(self._transition * 1000)
         await self.coordinator.async_request_refresh()
 

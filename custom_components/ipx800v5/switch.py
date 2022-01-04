@@ -125,6 +125,8 @@ class X8RSwitch(IpxEntity, SwitchEntity):
 
     async def async_turn_off(self, **kwargs) -> None:
         """Turn off the switch."""
+        # temp fix: turn on the light to force api state to on before turning off
+        await self.control.on()
         await self.control.off()
         await self.coordinator.async_request_refresh()
 
