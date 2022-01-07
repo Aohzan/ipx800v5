@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0
+
+- bump pypx800v5
+
 ## 0.4.0
 
 - Add all IPX diagnostic entities
