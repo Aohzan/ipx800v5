@@ -1,19 +1,15 @@
 """Support for IPX800 V5 numbers."""
 import logging
-from typing import List
 
 from pypx800v5 import IPX800, Counter, Tempo, Thermostat
 from pypx800v5.const import OBJECT_COUNTER, OBJECT_TEMPO, OBJECT_THERMOSTAT, TYPE_ANA
 
 from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    CONF_TYPE,
-    DEVICE_CLASS_TEMPERATURE,
-    ENTITY_CATEGORY_CONFIG,
-    TEMP_CELSIUS,
-)
+from homeassistant.const import CONF_TYPE, DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import CONF_DEVICES, CONF_EXT_TYPE, CONTROLLER, COORDINATOR, DOMAIN
@@ -25,14 +21,14 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
-    async_add_entities,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the IPX800 switches."""
     controller = hass.data[DOMAIN][entry.entry_id][CONTROLLER]
     coordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
     devices = hass.data[DOMAIN][entry.entry_id][CONF_DEVICES]["number"]
 
-    entities: List[NumberEntity] = []
+    entities: list[NumberEntity] = []
 
     for device in devices:
         if device.get(CONF_TYPE) == TYPE_ANA:
@@ -114,7 +110,7 @@ class ThermostatParamNumber(IpxEntity, NumberEntity):
             device_config, ipx, coordinator, suffix_name=f"{param} Temperature"
         )
         self.control = Thermostat(ipx, self._ext_number)
-        self._attr_entity_category = ENTITY_CATEGORY_CONFIG
+        self._attr_entity_category = EntityCategory.CONFIG
         self._attr_device_class = DEVICE_CLASS_TEMPERATURE
         self._attr_native_unit_of_measurement = TEMP_CELSIUS
         self._param = param
@@ -157,7 +153,7 @@ class TempoDelayNumber(IpxEntity, NumberEntity):
         self._attr_step = 1
         self._attr_unit_of_measurement = "s"
         self._attr_mode = NumberMode.BOX
-        self._attr_entity_category = ENTITY_CATEGORY_CONFIG
+        self._attr_entity_category = EntityCategory.CONFIG
         self._attr_icon = "mdi:clock-time-two"
 
     @property

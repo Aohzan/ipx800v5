@@ -1,11 +1,10 @@
 """Support for IPX800 V5 sensors."""
 import logging
-from typing import List
 
 from pypx800v5 import IPX800, XTHL, IPX800AnalogInput
 from pypx800v5.const import EXT_XTHL, IPX, TYPE_ANA
 
-from homeassistant.components.sensor import STATE_CLASS_MEASUREMENT, SensorEntity
+from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_NAME,
@@ -15,6 +14,7 @@ from homeassistant.const import (
     DEVICE_CLASS_TEMPERATURE,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import CONF_DEVICES, CONF_EXT_TYPE, CONTROLLER, COORDINATOR, DOMAIN
@@ -26,14 +26,14 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
-    async_add_entities,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the IPX800 sensors."""
     controller = hass.data[DOMAIN][entry.entry_id][CONTROLLER]
     coordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
     devices = hass.data[DOMAIN][entry.entry_id][CONF_DEVICES]["sensor"]
 
-    entities: List[SensorEntity] = []
+    entities: list[SensorEntity] = []
 
     for device in devices:
         if device.get(CONF_TYPE) == TYPE_ANA:
@@ -125,7 +125,7 @@ class XTHLSensor(IpxEntity, SensorEntity):
         self.control = XTHL(ipx, self._ext_number)
         self._attr_device_class = device_class
         self._attr_native_unit_of_measurement = unit_of_measurement
-        self._attr_state_class = STATE_CLASS_MEASUREMENT
+        self._attr_state_class = SensorStateClass.MEASUREMENT
         if req_type == "TEMP":
             self._state_id = self.control.temp_state_id
         elif req_type == "HUM":

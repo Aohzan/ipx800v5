@@ -1,6 +1,5 @@
 """Support for IPX800 V5 binary sensors."""
 import logging
-from typing import List
 
 from pypx800v5 import IPX800, X8D, X8R, X24D, IPX800DigitalInput, Tempo, Thermostat
 from pypx800v5.const import (
@@ -17,6 +16,7 @@ from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_TYPE
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import CONF_DEVICES, CONF_EXT_TYPE, CONTROLLER, COORDINATOR, DOMAIN
@@ -28,14 +28,14 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
-    async_add_entities,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the IPX800 sensors."""
     controller = hass.data[DOMAIN][entry.entry_id][CONTROLLER]
     coordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
     devices = hass.data[DOMAIN][entry.entry_id][CONF_DEVICES]["binary_sensor"]
 
-    entities: List[BinarySensorEntity] = []
+    entities: list[BinarySensorEntity] = []
 
     for device in devices:
         if device.get(CONF_TYPE) == TYPE_IO:

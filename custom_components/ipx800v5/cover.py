@@ -1,23 +1,18 @@
 """Support for IPX800 V5 covers."""
 import logging
-from typing import List
 
 from pypx800v5 import IPX800, X4VR
 from pypx800v5.const import EXT_X4VR
 
 from homeassistant.components.cover import (
     ATTR_POSITION,
-    DEVICE_CLASS_SHUTTER,
-    SUPPORT_CLOSE,
-    SUPPORT_CLOSE_TILT,
-    SUPPORT_OPEN,
-    SUPPORT_OPEN_TILT,
-    SUPPORT_SET_POSITION,
-    SUPPORT_STOP,
+    CoverDeviceClass,
     CoverEntity,
+    CoverEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import CONF_DEVICES, CONF_EXT_TYPE, CONTROLLER, COORDINATOR, DOMAIN
@@ -29,14 +24,14 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
-    async_add_entities,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the IPX800 switches."""
     controller = hass.data[DOMAIN][entry.entry_id][CONTROLLER]
     coordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
     devices = hass.data[DOMAIN][entry.entry_id][CONF_DEVICES]["cover"]
 
-    entities: List[CoverEntity] = []
+    entities: list[CoverEntity] = []
 
     for device in devices:
         if device[CONF_EXT_TYPE] == EXT_X4VR:
@@ -53,16 +48,21 @@ class X4VRCover(IpxEntity, CoverEntity):
         device_config: dict,
         ipx: IPX800,
         coordinator: DataUpdateCoordinator,
-    ):
+    ) -> None:
         """Initialize the X4VR Cover."""
         super().__init__(device_config, ipx, coordinator)
         self.control = X4VR(ipx, self._ext_number, self._io_number)
-        self._attr_device_class = DEVICE_CLASS_SHUTTER
+        self._attr_device_class = CoverDeviceClass.SHUTTER
         self._attr_supported_features = (
-            SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP | SUPPORT_SET_POSITION
+            CoverEntityFeature.OPEN
+            | CoverEntityFeature.CLOSE
+            | CoverEntityFeature.STOP
+            | CoverEntityFeature.SET_POSITION
         )
         if self.control.mode in [2, 3]:
-            self._attr_supported_features += SUPPORT_CLOSE_TILT | SUPPORT_OPEN_TILT
+            self._attr_supported_features += (
+                CoverEntityFeature.CLOSE_TILT | CoverEntityFeature.OPEN_TILT
+            )
 
     @property
     def is_closed(self) -> bool:

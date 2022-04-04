@@ -1,6 +1,5 @@
 """Support for IPX800 V5 climates."""
 import logging
-from typing import List
 
 from pypx800v5 import IPX800, X4FP, X8R, IPX800Relay, Thermostat, X4FPMode
 from pypx800v5.const import EXT_X4FP, EXT_X8R, IPX, OBJECT_THERMOSTAT
@@ -16,12 +15,12 @@ from homeassistant.components.climate.const import (
     PRESET_COMFORT,
     PRESET_ECO,
     PRESET_NONE,
-    SUPPORT_PRESET_MODE,
-    SUPPORT_TARGET_TEMPERATURE,
+    ClimateEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import CONF_DEVICES, CONF_EXT_TYPE, CONTROLLER, COORDINATOR, DOMAIN
@@ -33,14 +32,14 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
-    async_add_entities,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the IPX800 switches."""
     controller = hass.data[DOMAIN][entry.entry_id][CONTROLLER]
     coordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
     devices = hass.data[DOMAIN][entry.entry_id][CONF_DEVICES]["climate"]
 
-    entities: List[ClimateEntity] = []
+    entities: list[ClimateEntity] = []
 
     for device in devices:
         if device[CONF_EXT_TYPE] == EXT_X4FP:
@@ -66,7 +65,7 @@ class X4FPClimate(IpxEntity, ClimateEntity):
         super().__init__(device_config, ipx, coordinator)
         self.control = X4FP(ipx, self._ext_number, self._io_number)
 
-        self._attr_supported_features = SUPPORT_PRESET_MODE
+        self._attr_supported_features = ClimateEntityFeature.PRESET_MODE
         self._attr_temperature_unit = TEMP_CELSIUS
         self._attr_hvac_modes = [HVAC_MODE_HEAT, HVAC_MODE_OFF]
         self._attr_preset_modes = [
@@ -160,7 +159,7 @@ class RelayClimate(IpxEntity, ClimateEntity):
         elif device_config[CONF_EXT_TYPE] == EXT_X8R:
             self.control_minus = X8R(ipx, self._ext_number, self._io_numbers[0])
             self.control_plus = X8R(ipx, self._ext_number, self._io_numbers[1])
-        self._attr_supported_features = SUPPORT_PRESET_MODE
+        self._attr_supported_features = ClimateEntityFeature.PRESET_MODE
         self._attr_temperature_unit = TEMP_CELSIUS
         self._attr_hvac_modes = [HVAC_MODE_HEAT, HVAC_MODE_OFF]
         self._attr_preset_modes = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY, PRESET_NONE]
@@ -240,7 +239,10 @@ class ThermostatClimate(IpxEntity, ClimateEntity):
         super().__init__(device_config, ipx, coordinator)
         self.control = Thermostat(ipx, self._ext_number)
 
-        self._attr_supported_features = SUPPORT_PRESET_MODE | SUPPORT_TARGET_TEMPERATURE
+        self._attr_target_temperature_step = 0.1
+        self._attr_supported_features = (
+            ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.TARGET_TEMPERATURE
+        )
         self._attr_temperature_unit = TEMP_CELSIUS
         self._attr_hvac_modes = [HVAC_MODE_HEAT, HVAC_MODE_OFF]
         self._attr_preset_modes = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY, PRESET_NONE]
@@ -267,7 +269,7 @@ class ThermostatClimate(IpxEntity, ClimateEntity):
         """Return current action if heating or not."""
         if self.coordinator.data[self.control.io_state_id]["on"] is True:
             return CURRENT_HVAC_HEAT
-        elif self.coordinator.data[self.control.io_onoff_id]["on"] is False:
+        if self.coordinator.data[self.control.io_onoff_id]["on"] is False:
             return CURRENT_HVAC_OFF
         return CURRENT_HVAC_IDLE
 
@@ -276,11 +278,11 @@ class ThermostatClimate(IpxEntity, ClimateEntity):
         """Return current preset mode from 2 relay states."""
         if self.coordinator.data[self.control.io_comfort_id]["on"] is True:
             return PRESET_COMFORT
-        elif self.coordinator.data[self.control.io_eco_id]["on"] is True:
+        if self.coordinator.data[self.control.io_eco_id]["on"] is True:
             return PRESET_ECO
-        elif self.coordinator.data[self.control.io_nofrost_id]["on"] is True:
+        if self.coordinator.data[self.control.io_nofrost_id]["on"] is True:
             return PRESET_AWAY
-        elif self.coordinator.data[self.control.io_onoff_id]["on"] is False:
+        if self.coordinator.data[self.control.io_onoff_id]["on"] is False:
             return PRESET_NONE
 
     async def async_set_temperature(self, **kwargs):

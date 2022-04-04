@@ -1,7 +1,6 @@
 """Support for IPX800 V5 lights."""
 from asyncio import gather as async_gather
 import logging
-from typing import List
 
 from pypx800v5 import IPX800, X8R, XPWM, IPX800Relay, XDimmer
 from pypx800v5.const import EXT_X8R, EXT_XDIMMER, EXT_XPWM, IPX
@@ -15,12 +14,13 @@ from homeassistant.components.light import (
     COLOR_MODE_ONOFF,
     COLOR_MODE_RGB,
     COLOR_MODE_RGBW,
-    SUPPORT_TRANSITION,
     LightEntity,
+    LightEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_TYPE
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
@@ -53,14 +53,14 @@ def scaleto100(value):
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
-    async_add_entities,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the IPX800 lights."""
     controller = hass.data[DOMAIN][entry.entry_id][CONTROLLER]
     coordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
     devices = hass.data[DOMAIN][entry.entry_id][CONF_DEVICES]["light"]
 
-    entities: List[LightEntity] = []
+    entities: list[LightEntity] = []
 
     for device in devices:
         if device[CONF_EXT_TYPE] == IPX:
@@ -171,7 +171,7 @@ class XDimmerLight(IpxEntity, LightEntity):
         self._transition = device_config.get(CONF_TRANSITION, DEFAULT_TRANSITION)
         self._attr_supported_color_modes = {COLOR_MODE_BRIGHTNESS}
         self._attr_color_mode = COLOR_MODE_BRIGHTNESS
-        self._attr_supported_features = SUPPORT_TRANSITION
+        self._attr_supported_features = LightEntityFeature.TRANSITION
 
     @property
     def is_on(self) -> bool:
@@ -229,7 +229,7 @@ class XPWMLight(IpxEntity, LightEntity):
         self._transition = device_config.get(CONF_TRANSITION, DEFAULT_TRANSITION)
         self._attr_supported_color_modes = {COLOR_MODE_BRIGHTNESS}
         self._attr_color_mode = COLOR_MODE_BRIGHTNESS
-        self._attr_supported_features = SUPPORT_TRANSITION
+        self._attr_supported_features = LightEntityFeature.TRANSITION
 
     @property
     def is_on(self) -> bool:
@@ -289,7 +289,7 @@ class XPWMRGBLight(IpxEntity, LightEntity):
         self._transition = device_config.get(CONF_TRANSITION, DEFAULT_TRANSITION)
         self._attr_supported_color_modes = {COLOR_MODE_RGB}
         self._attr_color_mode = COLOR_MODE_RGB
-        self._attr_supported_features = SUPPORT_TRANSITION
+        self._attr_supported_features = LightEntityFeature.TRANSITION
 
     @property
     def is_on(self) -> bool:
@@ -415,7 +415,7 @@ class XPWMRGBWLight(IpxEntity, LightEntity):
         self._transition = device_config.get(CONF_TRANSITION, DEFAULT_TRANSITION)
         self._attr_supported_color_modes = {COLOR_MODE_RGBW}
         self._attr_color_mode = COLOR_MODE_RGBW
-        self._attr_supported_features = SUPPORT_TRANSITION
+        self._attr_supported_features = LightEntityFeature.TRANSITION
 
     @property
     def is_on(self) -> bool:

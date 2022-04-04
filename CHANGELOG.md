@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.0
+
+- 2022.4 compatibility
+
 ## 0.5.0
 
 - bump pypx800v5

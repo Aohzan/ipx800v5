@@ -22,14 +22,8 @@ from pypx800v5.const import (
     TYPE_IO,
 )
 
-from homeassistant.const import (
-    CONF_ENTITY_CATEGORY,
-    CONF_ID,
-    CONF_NAME,
-    CONF_TYPE,
-    ENTITY_CATEGORY_DIAGNOSTIC,
-    ENTITY_CATEGORY_SYSTEM,
-)
+from homeassistant.const import CONF_ENTITY_CATEGORY, CONF_ID, CONF_NAME, CONF_TYPE
+from homeassistant.helpers.entity import EntityCategory
 
 from .const import (
     CONF_COMPONENT,
@@ -38,6 +32,8 @@ from .const import (
     CONF_EXT_TYPE,
     CONF_IO_NUMBER,
     CONF_IO_NUMBERS,
+    TYPE_XPWM_RGB,
+    TYPE_XPWM_RGBW,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -56,7 +52,42 @@ def check_devices_config(devices_config: list) -> list:
     for device_config in devices_config:
         _LOGGER.debug("Read device name: %s", device_config.get(CONF_NAME))
 
-        # TODO
+        if (
+            device_config[CONF_EXT_TYPE]
+            in [
+                EXT_X4VR,
+                EXT_XTHL,
+                EXT_X24D,
+                EXT_X4FP,
+                EXT_X8D,
+                EXT_X8R,
+                EXT_XDIMMER,
+                EXT_XPWM,
+            ]
+            and CONF_EXT_NUMBER not in device_config
+        ):
+            _LOGGER.error(
+                "Device from extension %s skipped: %s must have %s set",
+                device_config[CONF_NAME],
+                device_config[CONF_EXT_TYPE],
+                CONF_EXT_NUMBER,
+            )
+            continue
+
+        # Check if RGB/RBW or FP/RELAY have ids set
+        if (
+            device_config[CONF_TYPE] in [TYPE_XPWM_RGB, TYPE_XPWM_RGBW]
+            or (
+                device_config[CONF_EXT_TYPE] in [IPX, EXT_X8R]
+                and device_config[CONF_COMPONENT] == "climate"
+            )
+        ) and CONF_IO_NUMBERS not in device_config:
+            _LOGGER.error(
+                "Device %s skipped: RGB/RGBW and climate relais must have %s set",
+                device_config[CONF_NAME],
+                CONF_IO_NUMBERS,
+            )
+            continue
 
         devices.append(device_config)
         _LOGGER.info(
@@ -98,7 +129,7 @@ def get_device_in_devices_config(
             device = device_config
             break
         # elif io_number(s) are equals
-        elif CONF_IO_NUMBER in device_auto and CONF_IO_NUMBER in device_config:
+        if CONF_IO_NUMBER in device_auto and CONF_IO_NUMBER in device_config:
             if device_config[CONF_IO_NUMBER] == device_auto[CONF_IO_NUMBER]:
                 device = device_config
                 break
@@ -124,12 +155,12 @@ def build_ipx_system_entities(ipx: IPX800) -> list:
             CONF_COMPONENT: "button",
             CONF_EXT_TYPE: IPX,
             CONF_EXT_NUMBER: 0,
-            CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_SYSTEM,
+            CONF_ENTITY_CATEGORY: EntityCategory.SYSTEM,
         }
     ]
     # Add all diagnostic entities
     for key, value in ipx.ipx_config.items():
-        key = str(key).removesuffix("_id")  # type: ignore
+        key = str(key).removesuffix("_id")
         if key.startswith("anaIPX") or key in [
             "anaHeapFree",
             "anaDeltaHeapFree",
@@ -144,7 +175,7 @@ def build_ipx_system_entities(ipx: IPX800) -> list:
                     CONF_EXT_NUMBER: 0,
                     CONF_TYPE: TYPE_ANA,
                     CONF_ID: value,
-                    CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_DIAGNOSTIC,
+                    CONF_ENTITY_CATEGORY: EntityCategory.DIAGNOSTIC,
                 }
             )
     if ipx.io_acpower_id in ipx.ipx_config:
@@ -156,7 +187,7 @@ def build_ipx_system_entities(ipx: IPX800) -> list:
                 CONF_EXT_NUMBER: 0,
                 CONF_TYPE: TYPE_IO,
                 CONF_ID: ipx.ipx_config[ipx.io_acpower_id],
-                CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_DIAGNOSTIC,
+                CONF_ENTITY_CATEGORY: EntityCategory.DIAGNOSTIC,
             }
         )
     return entities
