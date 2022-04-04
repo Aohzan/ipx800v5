@@ -6,13 +6,14 @@ import logging
 from aiohttp import web
 
 from homeassistant.components.http import HomeAssistantView
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import PUSH_USERNAME
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def check_api_auth(request, host, password) -> bool:
+def check_api_auth(request, host, push_password) -> bool:
     """Check authentication on API call."""
     try:
         if request.remote != host:
@@ -24,7 +25,7 @@ def check_api_auth(request, host, password) -> bool:
         if len(split) != 2 or split[0].strip().lower() != "basic":
             raise ApiCallNotAuthorized("Malformed Authorization header")
         username, password = b64decode(split[1]).decode().split(":", 1)
-        if username != PUSH_USERNAME or password != password:
+        if username != PUSH_USERNAME or password != push_password:
             raise ApiCallNotAuthorized("API call authentication invalid.")
         return True
     except ApiCallNotAuthorized as err:
@@ -90,6 +91,29 @@ class IpxRequestDataView(HomeAssistantView):
                         "Entity not found for state updating: %s", entity_id
                     )
 
+            return web.Response(status=HTTPStatus.OK, text="OK")
+
+
+class IpxRequestRefreshView(HomeAssistantView):
+    """Provide a page for the device to call for send multiple data at once."""
+
+    requires_auth = False
+    url = "/api/ipx800v5_refresh"
+    name = "api:ipx800v5_refresh"
+
+    def __init__(
+        self, host: str, password: str, coordinator: DataUpdateCoordinator
+    ) -> None:
+        """Init the IPX view."""
+        self.host = host
+        self.password = password
+        self.coordinator = coordinator
+        super().__init__()
+
+    async def get(self, request, data):
+        """Respond to requests from the device."""
+        if check_api_auth(request, self.host, self.password):
+            self.coordinator.async_request_refresh()
             return web.Response(status=HTTPStatus.OK, text="OK")
 
 

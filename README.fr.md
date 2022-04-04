@@ -175,13 +175,19 @@ ipx800v5:
 
 ## PUSH
 
+### Demande d'actualisation des états
+
+En faisant un appel PUSH depuis l'IPX sur l'URL `/api/ipx800v5_refresh/`, vous demandez à Home-Assistant de rafraichir l'état de toutes les entités.
+
+### Poussez l'état d'une entité
+
 Vous pouvez configurer des PUSH depuis votre IPX800 pour avoir l'état d'une entité mise à jour instantanément sans attendre la prochaine mise à jour.
 
 Premièrement, ajouter le mot de passe push dans votre configuration, dans les options de l'intégration via l'UI ou en yaml
 
 Ensuite, deux solutions:
 
-### Création manuelle (simple)
+#### Création manuelle (simple)
 
 Créez un PUSH dans les liens > Objets > Push, avec les éléments suivant
 
@@ -198,7 +204,7 @@ Exemple:
 Ensuite créer une scène pour activer votre PUSH avec un ON/OFF selon votre souhait, exemple ici avec un tempo:
 ![PUSH scene example](push_scene.jpg)
 
-### Création automatique (avancé)
+#### Création automatique (avancé)
 
 Il est possible de créer automatiquement l'objet PUSH dans votre configuration, via un service Home-Assistant appelé `ipx800v5.create_push_object`.
 Vous devez fournir:
@@ -210,3 +216,7 @@ Vous devez fournir:
 
 Ensuite créer une scène pour activer le nouveau PUSH créé avec un ON/OFF selon votre souhait, exemple ici avec un tempo:
 ![PUSH scene example](push_scene.jpg)
+
+### Poussez l'état de pusieurs entités
+
+Même chose que précédemment, en séparant par des `&`, exemple : `/api/ipx800v5/votre_entite=on&votre_autre_entite=off`.

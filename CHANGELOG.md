@@ -3,6 +3,7 @@
 ## 0.6.0
 
 - 2022.4 compatibility
+- Add API call to ask refresh
 
 ## 0.5.0
 

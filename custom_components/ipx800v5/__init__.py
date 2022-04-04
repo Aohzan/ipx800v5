@@ -19,11 +19,12 @@ from homeassistant.const import (
     CONF_TYPE,
     CONF_UNIT_OF_MEASUREMENT,
 )
+from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.debounce import Debouncer
-from homeassistant.helpers.typing import ConfigType, HomeAssistantType
+from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
@@ -47,7 +48,7 @@ from .const import (
     REQUEST_REFRESH_DELAY,
     UNDO_UPDATE_LISTENER,
 )
-from .request_views import IpxRequestDataView, IpxRequestView
+from .request_views import IpxRequestDataView, IpxRequestRefreshView, IpxRequestView
 from .tools_entities import (
     build_extensions_entities,
     build_ipx_entities,
@@ -97,7 +98,7 @@ CONFIG_SCHEMA = vol.Schema(
 )
 
 
-async def async_setup(hass: HomeAssistantType, config: ConfigType) -> bool:
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the IPX800 from config file."""
     if DOMAIN in config:
         for ipx800_config in config[DOMAIN]:
@@ -110,11 +111,11 @@ async def async_setup(hass: HomeAssistantType, config: ConfigType) -> bool:
     return True
 
 
-async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up the IPX800v5."""
     hass.data.setdefault(DOMAIN, {})
 
-    config = entry.data | entry.options  # type: ignore
+    config = entry.data | entry.options
 
     session = async_get_clientsession(hass, False)
 
@@ -136,9 +137,6 @@ async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry) -> bool
         raise ConfigEntryNotReady from exception
     except IPX800InvalidAuthError:
         _LOGGER.error("Authentication error, check API Key")
-        return False
-    except Exception as exception:
-        _LOGGER.error("unknown error: %s", exception)
         return False
 
     await ipx.init_config()
@@ -227,6 +225,12 @@ async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry) -> bool
             IpxRequestDataView(config[CONF_HOST], config[CONF_PUSH_PASSWORD])
         )
 
+        hass.http.register_view(
+            IpxRequestRefreshView(
+                config[CONF_HOST], config[CONF_PUSH_PASSWORD], coordinator
+            )
+        )
+
         async def service_create_push_handler(call):
             """Handle the service call."""
             entity_id = call.data["entity_id"]
@@ -270,7 +274,7 @@ async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry) -> bool
     return True
 
 
-async def async_unload_entry(hass: HomeAssistantType, entry: ConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
