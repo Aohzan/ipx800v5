@@ -8,12 +8,7 @@ from homeassistant.components.cover import (
     ATTR_POSITION,
     CoverDeviceClass,
     CoverEntity,
-    SUPPORT_CLOSE,
-    SUPPORT_CLOSE_TILT,
-    SUPPORT_OPEN,
-    SUPPORT_OPEN_TILT,
-    SUPPORT_SET_POSITION,
-    SUPPORT_STOP,
+    CoverEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -59,10 +54,15 @@ class X4VRCover(IpxEntity, CoverEntity):
         self.control = X4VR(ipx, self._ext_number, self._io_number)
         self._attr_device_class = CoverDeviceClass.SHUTTER
         self._attr_supported_features = (
-            SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP | SUPPORT_SET_POSITION
+            CoverEntityFeature.OPEN
+            | CoverEntityFeature.CLOSE
+            | CoverEntityFeature.STOP
+            | CoverEntityFeature.SET_POSITION
         )
         if self.control.mode in [2, 3]:
-            self._attr_supported_features += SUPPORT_CLOSE_TILT | SUPPORT_OPEN_TILT
+            self._attr_supported_features += (
+                CoverEntityFeature.CLOSE_TILT | CoverEntityFeature.OPEN_TILT
+            )
 
     @property
     def is_closed(self) -> bool:

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.0
+
+- 2022.5 compatibility
+
 ## 0.6.0
 
 - 2022.4 compatibility

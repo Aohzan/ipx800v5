@@ -14,9 +14,8 @@ from homeassistant.components.light import (
     COLOR_MODE_ONOFF,
     COLOR_MODE_RGB,
     COLOR_MODE_RGBW,
-    SUPPORT_TRANSITION,
     LightEntity,
-    # LightEntityFeature,
+    LightEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_TYPE
@@ -172,7 +171,7 @@ class XDimmerLight(IpxEntity, LightEntity):
         self._transition = device_config.get(CONF_TRANSITION, DEFAULT_TRANSITION)
         self._attr_supported_color_modes = {COLOR_MODE_BRIGHTNESS}
         self._attr_color_mode = COLOR_MODE_BRIGHTNESS
-        self._attr_supported_features = SUPPORT_TRANSITION
+        self._attr_supported_features = LightEntityFeature.TRANSITION
 
     @property
     def is_on(self) -> bool:
@@ -230,7 +229,7 @@ class XPWMLight(IpxEntity, LightEntity):
         self._transition = device_config.get(CONF_TRANSITION, DEFAULT_TRANSITION)
         self._attr_supported_color_modes = {COLOR_MODE_BRIGHTNESS}
         self._attr_color_mode = COLOR_MODE_BRIGHTNESS
-        self._attr_supported_features = SUPPORT_TRANSITION
+        self._attr_supported_features = LightEntityFeature.TRANSITION
 
     @property
     def is_on(self) -> bool:
@@ -290,7 +289,7 @@ class XPWMRGBLight(IpxEntity, LightEntity):
         self._transition = device_config.get(CONF_TRANSITION, DEFAULT_TRANSITION)
         self._attr_supported_color_modes = {COLOR_MODE_RGB}
         self._attr_color_mode = COLOR_MODE_RGB
-        self._attr_supported_features = SUPPORT_TRANSITION
+        self._attr_supported_features = LightEntityFeature.TRANSITION
 
     @property
     def is_on(self) -> bool:
@@ -416,7 +415,7 @@ class XPWMRGBWLight(IpxEntity, LightEntity):
         self._transition = device_config.get(CONF_TRANSITION, DEFAULT_TRANSITION)
         self._attr_supported_color_modes = {COLOR_MODE_RGBW}
         self._attr_color_mode = COLOR_MODE_RGBW
-        self._attr_supported_features = SUPPORT_TRANSITION
+        self._attr_supported_features = LightEntityFeature.TRANSITION
 
     @property
     def is_on(self) -> bool:

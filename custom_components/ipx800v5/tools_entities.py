@@ -155,7 +155,7 @@ def build_ipx_system_entities(ipx: IPX800) -> list:
             CONF_COMPONENT: "button",
             CONF_EXT_TYPE: IPX,
             CONF_EXT_NUMBER: 0,
-            CONF_ENTITY_CATEGORY: EntityCategory.SYSTEM,
+            CONF_ENTITY_CATEGORY: EntityCategory.DIAGNOSTIC,
         }
     ]
     # Add all diagnostic entities

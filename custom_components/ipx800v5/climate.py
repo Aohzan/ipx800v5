@@ -15,8 +15,7 @@ from homeassistant.components.climate.const import (
     PRESET_COMFORT,
     PRESET_ECO,
     PRESET_NONE,
-    SUPPORT_PRESET_MODE,
-    SUPPORT_TARGET_TEMPERATURE,
+    ClimateEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS
@@ -66,7 +65,7 @@ class X4FPClimate(IpxEntity, ClimateEntity):
         super().__init__(device_config, ipx, coordinator)
         self.control = X4FP(ipx, self._ext_number, self._io_number)
 
-        self._attr_supported_features = SUPPORT_PRESET_MODE
+        self._attr_supported_features = ClimateEntityFeature.PRESET_MODE
         self._attr_temperature_unit = TEMP_CELSIUS
         self._attr_hvac_modes = [HVAC_MODE_HEAT, HVAC_MODE_OFF]
         self._attr_preset_modes = [
@@ -160,7 +159,7 @@ class RelayClimate(IpxEntity, ClimateEntity):
         elif device_config[CONF_EXT_TYPE] == EXT_X8R:
             self.control_minus = X8R(ipx, self._ext_number, self._io_numbers[0])
             self.control_plus = X8R(ipx, self._ext_number, self._io_numbers[1])
-        self._attr_supported_features = SUPPORT_PRESET_MODE
+        self._attr_supported_features = ClimateEntityFeature.PRESET_MODE
         self._attr_temperature_unit = TEMP_CELSIUS
         self._attr_hvac_modes = [HVAC_MODE_HEAT, HVAC_MODE_OFF]
         self._attr_preset_modes = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY, PRESET_NONE]
@@ -241,7 +240,9 @@ class ThermostatClimate(IpxEntity, ClimateEntity):
         self.control = Thermostat(ipx, self._ext_number)
 
         self._attr_target_temperature_step = 0.1
-        self._attr_supported_features = SUPPORT_PRESET_MODE | SUPPORT_TARGET_TEMPERATURE
+        self._attr_supported_features = (
+            ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.TARGET_TEMPERATURE
+        )
         self._attr_temperature_unit = TEMP_CELSIUS
         self._attr_hvac_modes = [HVAC_MODE_HEAT, HVAC_MODE_OFF]
         self._attr_preset_modes = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY, PRESET_NONE]
