@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.0
+
+- Stable version
+- IPX800V5 5.4.3.1 firmware compatibility
+
 ## 0.7.0
 
 - 2022.5 compatibility

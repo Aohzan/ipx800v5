@@ -2,7 +2,6 @@
   "config": {
     "step": {
       "user": {
-        "title": "GCE IPX800 V5",
         "description": "Pour une configuration avancée en yaml, voir la documentation : https://github.com/Aohzan/ipx800v5.",
         "data": {
           "name": "Nom de l'IPX800 V5",
