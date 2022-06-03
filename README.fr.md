@@ -67,6 +67,7 @@ Ajoutez votre configuration `ipx800v5` dans votre fichier `configuration.yaml`.
 | `api_key`       | string | yes      | -         | Clé API configurée (http://IP_IPX800/#/system/apikey)                                                                  |
 | `push_password` | string | no       | -         | Password pour activer les PUSH depuis l'IPX800 [voir ici](#PUSH)                                                       |
 | `devices_auto`  | list   | no       | -         | Ajout d'appareils automatiquement pour les extensions ou objets spécifiés [voir code entre crochets](#Fonctionnalités) |
+| `diag_sensors`  | bool   | no       | False     | Ajout des sensors de diagnostiques |
 | `devices`       | list   | no       | -         | Liste d'appareils à ajouter manuellement [configuration](#Devices)                                                     |
 
 ##### Devices

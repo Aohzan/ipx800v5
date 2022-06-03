@@ -147,7 +147,7 @@ def get_device_in_devices_config(
     return device_auto
 
 
-def build_ipx_system_entities(ipx: IPX800) -> list:
+def build_ipx_system_entities(ipx: IPX800, enable_diag_sensors: bool = False) -> list:
     """Add system, configuration and diagnostic IPX800 entities."""
     entities = [
         {
@@ -159,25 +159,26 @@ def build_ipx_system_entities(ipx: IPX800) -> list:
         }
     ]
     # Add all diagnostic entities
-    for key, value in ipx.ipx_config.items():
-        key = str(key).removesuffix("_id")
-        if key.startswith("anaIPX") or key in [
-            "anaHeapFree",
-            "anaDeltaHeapFree",
-            "anaMonitorConnections",
-        ]:
-            name = key.removeprefix("ana")
-            entities.append(
-                {
-                    CONF_NAME: f"IPX800 {name}",
-                    CONF_COMPONENT: "sensor",
-                    CONF_EXT_TYPE: IPX,
-                    CONF_EXT_NUMBER: 0,
-                    CONF_TYPE: TYPE_ANA,
-                    CONF_ID: value,
-                    CONF_ENTITY_CATEGORY: EntityCategory.DIAGNOSTIC,
-                }
-            )
+    if enable_diag_sensors:
+        for key, value in ipx.ipx_config.items():
+            key = str(key).removesuffix("_id")
+            if key.startswith("anaIPX") or key in [
+                "anaHeapFree",
+                "anaDeltaHeapFree",
+                "anaMonitorConnections",
+            ]:
+                name = key.removeprefix("ana")
+                entities.append(
+                    {
+                        CONF_NAME: f"IPX800 {name}",
+                        CONF_COMPONENT: "sensor",
+                        CONF_EXT_TYPE: IPX,
+                        CONF_EXT_NUMBER: 0,
+                        CONF_TYPE: TYPE_ANA,
+                        CONF_ID: value,
+                        CONF_ENTITY_CATEGORY: EntityCategory.DIAGNOSTIC,
+                    }
+                )
     if ipx.io_acpower_id in ipx.ipx_config:
         entities.append(
             {

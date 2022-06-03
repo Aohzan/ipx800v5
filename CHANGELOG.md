@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.0
+
+- No diag sensor anymore, set `diag_sensors` to `True` in yaml config to add them
+
 ## 1.0.0
 
 - Stable version

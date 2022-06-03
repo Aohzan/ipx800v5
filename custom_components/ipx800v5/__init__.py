@@ -32,6 +32,7 @@ from .const import (
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEVICES,
     CONF_DEVICES_AUTO,
+    CONF_DIAG_SENSORS,
     CONF_EXT_NUMBER,
     CONF_EXT_TYPE,
     CONF_IO_NUMBER,
@@ -193,7 +194,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             entry.source, config[CONF_DEVICES], config.get(CONF_DEVICES_AUTO, [])
         )
     )
-    auto_entities.extend(build_ipx_system_entities(ipx))
+    auto_entities.extend(build_ipx_system_entities(ipx, config.get(CONF_DIAG_SENSORS)))
     auto_entities.extend(
         build_extensions_entities(
             entry.source, ipx, config[CONF_DEVICES], config.get(CONF_DEVICES_AUTO, [])
