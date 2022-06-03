@@ -194,7 +194,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             entry.source, config[CONF_DEVICES], config.get(CONF_DEVICES_AUTO, [])
         )
     )
-    auto_entities.extend(build_ipx_system_entities(ipx, config.get(CONF_DIAG_SENSORS)))
+    auto_entities.extend(
+        build_ipx_system_entities(ipx, config.get(CONF_DIAG_SENSORS, False))
+    )
     auto_entities.extend(
         build_extensions_entities(
             entry.source, ipx, config[CONF_DEVICES], config.get(CONF_DEVICES_AUTO, [])
