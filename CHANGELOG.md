@@ -3,6 +3,7 @@
 ## 1.1.0
 
 - No diag sensor anymore, set `diag_sensors` to `True` in yaml config to add them
+- Rename default IPX800 entities to match device (duplicate entities can be created, you have to delete the old one)
 
 ## 1.0.0
 
