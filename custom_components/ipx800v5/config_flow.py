@@ -211,7 +211,7 @@ async def _build_param_schema(
             device = get_device_in_devices_config(
                 devices_config,
                 {
-                    CONF_NAME: f"IPX800 Relais {i + 1}",
+                    CONF_NAME: f"{DEFAULT_IPX_NAME} Relais {i + 1}",
                     CONF_COMPONENT: "switch",
                     CONF_EXT_TYPE: IPX,
                     CONF_EXT_NUMBER: 0,
@@ -235,7 +235,7 @@ async def _build_param_schema(
                         device = get_device_in_devices_config(
                             devices_config,
                             {
-                                CONF_NAME: f"IPX800 Relais {i + 1}",
+                                CONF_NAME: f"{DEFAULT_IPX_NAME} Relais {i + 1}",
                                 CONF_COMPONENT: "switch",
                                 CONF_EXT_TYPE: IPX,
                                 CONF_EXT_NUMBER: 0,

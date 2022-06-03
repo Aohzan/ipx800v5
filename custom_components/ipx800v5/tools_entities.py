@@ -32,6 +32,7 @@ from .const import (
     CONF_EXT_TYPE,
     CONF_IO_NUMBER,
     CONF_IO_NUMBERS,
+    DEFAULT_IPX_NAME,
     TYPE_XPWM_RGB,
     TYPE_XPWM_RGBW,
 )
@@ -151,7 +152,7 @@ def build_ipx_system_entities(ipx: IPX800, enable_diag_sensors: bool = False) ->
     """Add system, configuration and diagnostic IPX800 entities."""
     entities = [
         {
-            CONF_NAME: "IPX800 Reboot",
+            CONF_NAME: f"{DEFAULT_IPX_NAME} Reboot",
             CONF_COMPONENT: "button",
             CONF_EXT_TYPE: IPX,
             CONF_EXT_NUMBER: 0,
@@ -170,7 +171,7 @@ def build_ipx_system_entities(ipx: IPX800, enable_diag_sensors: bool = False) ->
                 name = key.removeprefix("ana")
                 entities.append(
                     {
-                        CONF_NAME: f"IPX800 {name}",
+                        CONF_NAME: f"{DEFAULT_IPX_NAME} {name}",
                         CONF_COMPONENT: "sensor",
                         CONF_EXT_TYPE: IPX,
                         CONF_EXT_NUMBER: 0,
@@ -182,7 +183,7 @@ def build_ipx_system_entities(ipx: IPX800, enable_diag_sensors: bool = False) ->
     if ipx.io_acpower_id in ipx.ipx_config:
         entities.append(
             {
-                CONF_NAME: "IPX800 AC Power",
+                CONF_NAME: f"{DEFAULT_IPX_NAME} AC Power",
                 CONF_COMPONENT: "binary_sensor",
                 CONF_EXT_TYPE: IPX,
                 CONF_EXT_NUMBER: 0,
@@ -208,7 +209,7 @@ def build_ipx_entities(
                 get_device_in_devices_config(
                     devices_config,
                     {
-                        CONF_NAME: f"IPX800 Relais {i + 1}",
+                        CONF_NAME: f"{DEFAULT_IPX_NAME} Relais {i + 1}",
                         CONF_COMPONENT: "switch",
                         CONF_EXT_TYPE: IPX,
                         CONF_EXT_NUMBER: 0,
@@ -221,7 +222,7 @@ def build_ipx_entities(
                 get_device_in_devices_config(
                     devices_config,
                     {
-                        CONF_NAME: f"IPX800 Digital Input {i + 1}",
+                        CONF_NAME: f"{DEFAULT_IPX_NAME} Digital Input {i + 1}",
                         CONF_COMPONENT: "binary_sensor",
                         CONF_EXT_TYPE: IPX,
                         CONF_EXT_NUMBER: 0,
@@ -235,7 +236,7 @@ def build_ipx_entities(
                 get_device_in_devices_config(
                     devices_config,
                     {
-                        CONF_NAME: f"IPX800 Analog Input {i + 1}",
+                        CONF_NAME: f"{DEFAULT_IPX_NAME} Analog Input {i + 1}",
                         CONF_COMPONENT: "sensor",
                         CONF_EXT_TYPE: IPX,
                         CONF_EXT_NUMBER: 0,
