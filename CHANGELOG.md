@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.0
+
+- Fix global refresh from push. Update your PUSH URL to: `/api/ipx800v5_refresh/on`
+
 ## 1.1.0
 
 - No diag sensor anymore, set `diag_sensors` to `True` in yaml config to add them

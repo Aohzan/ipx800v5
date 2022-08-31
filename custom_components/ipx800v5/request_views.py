@@ -49,6 +49,7 @@ class IpxRequestView(HomeAssistantView):
     async def get(self, request, entity_id, state):
         """Respond to requests from the device."""
         if check_api_auth(request, self.host, self.password):
+            _LOGGER.debug("State update pushed from IPX")
             hass = request.app["hass"]
             old_state = hass.states.get(entity_id)
             _LOGGER.debug("Update %s to state %s", entity_id, state)
@@ -56,6 +57,7 @@ class IpxRequestView(HomeAssistantView):
                 hass.states.async_set(entity_id, state, old_state.attributes)
                 return web.Response(status=HTTPStatus.OK, text="OK")
             _LOGGER.warning("Entity not found for state updating: %s", entity_id)
+        _LOGGER.warning("Authentication for PUSH invalid")
 
 
 class IpxRequestDataView(HomeAssistantView):
@@ -74,6 +76,7 @@ class IpxRequestDataView(HomeAssistantView):
     async def get(self, request, data):
         """Respond to requests from the device."""
         if check_api_auth(request, self.host, self.password):
+            _LOGGER.debug("State update pushed from IPX")
             hass = request.app["hass"]
             entities_data = data.split("&")
             for entity_data in entities_data:
@@ -92,13 +95,14 @@ class IpxRequestDataView(HomeAssistantView):
                     )
 
             return web.Response(status=HTTPStatus.OK, text="OK")
+        _LOGGER.warning("Authentication for PUSH invalid")
 
 
 class IpxRequestRefreshView(HomeAssistantView):
     """Provide a page for the device to call for send multiple data at once."""
 
     requires_auth = False
-    url = "/api/ipx800v5_refresh"
+    url = "/api/ipx800v5_refresh/{data}"
     name = "api:ipx800v5_refresh"
 
     def __init__(
@@ -113,8 +117,10 @@ class IpxRequestRefreshView(HomeAssistantView):
     async def get(self, request, data):
         """Respond to requests from the device."""
         if check_api_auth(request, self.host, self.password):
-            self.coordinator.async_request_refresh()
+            _LOGGER.debug("Update asked from IPX PUSH")
+            await self.coordinator.async_request_refresh()
             return web.Response(status=HTTPStatus.OK, text="OK")
+        _LOGGER.warning("Authentication for PUSH invalid")
 
 
 class ApiCallNotAuthorized(BaseException):

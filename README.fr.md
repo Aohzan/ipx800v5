@@ -178,7 +178,7 @@ ipx800v5:
 
 ### Demande d'actualisation des états
 
-En faisant un appel PUSH depuis l'IPX sur l'URL `/api/ipx800v5_refresh/`, vous demandez à Home-Assistant de rafraichir l'état de toutes les entités.
+En faisant un appel PUSH depuis l'IPX sur l'URL `/api/ipx800v5_refresh/on`, vous demandez à Home-Assistant de rafraichir l'état de toutes les entités.
 
 ### Poussez l'état d'une entité
 
