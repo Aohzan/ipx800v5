@@ -1,5 +1,6 @@
 """Support for IPX800 V5 covers."""
 import logging
+from typing import Any
 
 from pypx800v5 import IPX800, X4VR
 from pypx800v5.const import EXT_X4VR
@@ -74,32 +75,32 @@ class X4VRCover(IpxEntity, CoverEntity):
         """Return the current cover position."""
         return 100 - int(self.coordinator.data[self.control.ana_position_id]["value"])
 
-    async def async_open_cover(self, **kwargs) -> None:
+    async def async_open_cover(self, **kwargs: Any) -> None:
         """Open cover."""
         await self.control.open()
         await self.coordinator.async_request_refresh()
 
-    async def async_close_cover(self, **kwargs) -> None:
+    async def async_close_cover(self, **kwargs: Any) -> None:
         """Close cover."""
         await self.control.close()
         await self.coordinator.async_request_refresh()
 
-    async def async_stop_cover(self, **kwargs) -> None:
+    async def async_stop_cover(self, **kwargs: Any) -> None:
         """Stop the cover."""
         await self.control.stop()
         await self.coordinator.async_request_refresh()
 
-    async def async_set_cover_position(self, **kwargs) -> None:
+    async def async_set_cover_position(self, **kwargs: Any) -> None:
         """Set the cover to a specific position."""
         await self.control.set_position(kwargs[ATTR_POSITION])
         await self.coordinator.async_request_refresh()
 
-    async def async_open_cover_tilt(self, **kwargs):
+    async def async_open_cover_tilt(self, **kwargs: Any) -> None:
         """Open the cover tilt."""
         await self.control.open_bso()
         await self.coordinator.async_request_refresh()
 
-    async def async_close_cover_tilt(self, **kwargs):
+    async def async_close_cover_tilt(self, **kwargs: Any) -> None:
         """Close the cover tilt."""
         await self.control.close_bso()
         await self.coordinator.async_request_refresh()

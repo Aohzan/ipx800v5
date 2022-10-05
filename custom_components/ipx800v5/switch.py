@@ -1,5 +1,6 @@
 """Support for IPX800 V5 switches."""
 import logging
+from typing import Any
 
 from pypx800v5 import IPX800, X8R, IPX800Relay, Tempo
 from pypx800v5.const import EXT_X8R, IPX, OBJECT_TEMPO, TYPE_IO
@@ -51,17 +52,17 @@ class IOSwitch(IpxEntity, SwitchEntity):
         """Return the current value."""
         return self.coordinator.data[self._io_id]["on"] is True
 
-    async def async_turn_on(self, **kwargs) -> None:
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the switch."""
         await self.ipx.update_io(self._io_id, True)
         await self.coordinator.async_request_refresh()
 
-    async def async_turn_off(self, **kwargs) -> None:
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the switch."""
         await self.ipx.update_io(self._io_id, False)
         await self.coordinator.async_request_refresh()
 
-    async def async_toggle(self, **kwargs) -> None:
+    async def async_toggle(self, **kwargs: Any) -> None:
         """Toggle the switch."""
         await self.ipx.update_io(self._io_id, True, "toggle")
         await self.coordinator.async_request_refresh()
@@ -85,17 +86,17 @@ class IpxSwitch(IpxEntity, SwitchEntity):
         """Return the state."""
         return self.coordinator.data[self.control.io_state_id]["on"] is True
 
-    async def async_turn_on(self, **kwargs) -> None:
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the switch."""
         await self.control.on()
         await self.coordinator.async_request_refresh()
 
-    async def async_turn_off(self, **kwargs) -> None:
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the switch."""
         await self.control.off()
         await self.coordinator.async_request_refresh()
 
-    async def async_toggle(self, **kwargs) -> None:
+    async def async_toggle(self, **kwargs: Any) -> None:
         """Toggle the switch."""
         await self.control.toggle()
         await self.coordinator.async_request_refresh()
@@ -119,17 +120,17 @@ class X8RSwitch(IpxEntity, SwitchEntity):
         """Return the state."""
         return self.coordinator.data[self.control.io_state_id]["on"] is True
 
-    async def async_turn_on(self, **kwargs) -> None:
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the switch."""
         await self.control.on()
         await self.coordinator.async_request_refresh()
 
-    async def async_turn_off(self, **kwargs) -> None:
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the switch."""
         await self.control.off()
         await self.coordinator.async_request_refresh()
 
-    async def async_toggle(self, **kwargs) -> None:
+    async def async_toggle(self, **kwargs: Any) -> None:
         """Toggle the switch."""
         await self.control.toggle()
         await self.coordinator.async_request_refresh()
@@ -155,12 +156,12 @@ class TempoEnableSwitch(IpxEntity, SwitchEntity):
         """Return the current value."""
         return self.coordinator.data[self.control.io_enabled_id]["on"] is True
 
-    async def async_turn_on(self, **kwargs) -> None:
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the switch."""
         await self.control.on()
         await self.coordinator.async_request_refresh()
 
-    async def async_turn_off(self, **kwargs) -> None:
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the switch."""
         await self.control.off()
         await self.coordinator.async_request_refresh()

@@ -4,15 +4,13 @@ import logging
 from pypx800v5 import IPX800, XTHL, IPX800AnalogInput
 from pypx800v5.const import EXT_XTHL, IPX, TYPE_ANA
 
-from homeassistant.components.sensor import SensorEntity, SensorStateClass
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    CONF_NAME,
-    CONF_TYPE,
-    DEVICE_CLASS_HUMIDITY,
-    DEVICE_CLASS_ILLUMINANCE,
-    DEVICE_CLASS_TEMPERATURE,
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
 )
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_NAME, CONF_TYPE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
@@ -46,7 +44,7 @@ async def async_setup_entry(
                     device,
                     controller,
                     coordinator,
-                    DEVICE_CLASS_TEMPERATURE,
+                    SensorDeviceClass.TEMPERATURE,
                     "°C",
                     "TEMP",
                     "Temperature",
@@ -58,7 +56,7 @@ async def async_setup_entry(
                     device,
                     controller,
                     coordinator,
-                    DEVICE_CLASS_HUMIDITY,
+                    SensorDeviceClass.HUMIDITY,
                     "%",
                     "HUM",
                     "Humidity",
@@ -70,7 +68,7 @@ async def async_setup_entry(
                     device,
                     controller,
                     coordinator,
-                    DEVICE_CLASS_ILLUMINANCE,
+                    SensorDeviceClass.ILLUMINANCE,
                     "lx",
                     "LUM",
                     "Luminance",
@@ -85,7 +83,7 @@ class AnalogSensor(IpxEntity, SensorEntity):
     """Representation of an analog as a sensor."""
 
     @property
-    def native_value(self):
+    def native_value(self) -> float:
         """Return the current value."""
         return self.coordinator.data[self._io_id]["value"]
 
@@ -101,7 +99,7 @@ class IpxAnalogInputSensor(IpxEntity, SensorEntity):
         self.control = IPX800AnalogInput(ipx, self._io_number)
 
     @property
-    def native_value(self):
+    def native_value(self) -> float:
         """Return the current value."""
         return self.coordinator.data[self.control.ana_state_id]["value"]
 
@@ -114,7 +112,7 @@ class XTHLSensor(IpxEntity, SensorEntity):
         device_config: dict,
         ipx: IPX800,
         coordinator: DataUpdateCoordinator,
-        device_class: str,
+        device_class: SensorDeviceClass,
         unit_of_measurement: str,
         req_type: str,
         suffix_name: str,
@@ -134,6 +132,6 @@ class XTHLSensor(IpxEntity, SensorEntity):
             self._state_id = self.control.lum_state_id
 
     @property
-    def native_value(self):
+    def native_value(self) -> float:
         """Return the current value."""
         return round(self.coordinator.data[self._state_id]["value"], 1)

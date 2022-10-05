@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.0
+
+- Migrate deprecated methods
+
 ## 1.2.0
 
 - Fix global refresh from push. Update your PUSH URL to: `/api/ipx800v5_refresh/on`

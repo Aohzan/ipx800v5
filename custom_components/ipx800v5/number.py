@@ -5,8 +5,9 @@ from pypx800v5 import IPX800, Counter, Tempo, Thermostat
 from pypx800v5.const import OBJECT_COUNTER, OBJECT_TEMPO, OBJECT_THERMOSTAT, TYPE_ANA
 
 from homeassistant.components.number import NumberEntity, NumberMode
+from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_TYPE, DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS
+from homeassistant.const import CONF_TYPE, TEMP_CELSIUS, TIME_SECONDS
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -55,17 +56,21 @@ class AnalogNumber(IpxEntity, NumberEntity):
     """Representation of an analog as a number."""
 
     @property
-    def native_value(self):
+    def native_value(self) -> float:
         """Return the current value."""
-        return self.coordinator.data[self._io_id]["value"]
+        return float(self.coordinator.data[self._io_id]["value"])
 
-    async def async_set_value(self, value) -> None:
+    async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
         await self.ipx.update_ana(self._io_id, value)
 
 
 class CounterNumber(IpxEntity, NumberEntity):
     """Representation of a IPX Counter as a number entity."""
+
+    _attr_mode = NumberMode.BOX
+    _attr_native_min_value = -21474836
+    _attr_native_max_value = 21474836
 
     def __init__(
         self,
@@ -76,27 +81,32 @@ class CounterNumber(IpxEntity, NumberEntity):
         """Initialize the RelaySwitch."""
         super().__init__(device_config, ipx, coordinator)
         self.control = Counter(ipx, self._ext_number)
-        self._attr_mode = NumberMode.BOX
-        self._attr_min_value = -21474836
-        self._attr_max_value = 21474836
 
     @property
-    def value(self) -> float:
+    def native_value(self) -> float:
         """Return the current value."""
         return float(self.coordinator.data[self.control.ana_state_id]["value"])
 
     @property
-    def step(self) -> float:
+    def native_step(self) -> float:
         """Return the step value."""
         return float(self.coordinator.data[self.control.ana_step_id]["value"])
 
-    async def async_set_value(self, value: float) -> None:
+    async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
         await self.control.set_value(value)
 
 
 class ThermostatParamNumber(IpxEntity, NumberEntity):
     """Representation of a IPX Counter as a number entity."""
+
+    _attr_mode = NumberMode.BOX
+    _attr_native_min_value = 0
+    _attr_native_max_value = 35
+    _attr_native_step = 0.1
+    _attr_entity_category = EntityCategory.CONFIG
+    _attr_device_class = SensorDeviceClass.TEMPERATURE
+    _attr_native_unit_of_measurement = TEMP_CELSIUS
 
     def __init__(
         self,
@@ -110,22 +120,15 @@ class ThermostatParamNumber(IpxEntity, NumberEntity):
             device_config, ipx, coordinator, suffix_name=f"{param} Temperature"
         )
         self.control = Thermostat(ipx, self._ext_number)
-        self._attr_entity_category = EntityCategory.CONFIG
-        self._attr_device_class = DEVICE_CLASS_TEMPERATURE
-        self._attr_native_unit_of_measurement = TEMP_CELSIUS
         self._param = param
         self._value = self.control._config[f"setPoint{param}"]
-        self._attr_mode = NumberMode.BOX
-        self._attr_min_value = 0
-        self._attr_max_value = 35
-        self._attr_step = 0.1
 
     @property
-    def value(self) -> float:
+    def native_value(self) -> float:
         """Return the current value."""
         return self._value
 
-    async def async_set_value(self, value: float) -> None:
+    async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
         if self._param == "Comfort":
             await self.control.update_params(comfortTemp=value)
@@ -139,6 +142,14 @@ class ThermostatParamNumber(IpxEntity, NumberEntity):
 class TempoDelayNumber(IpxEntity, NumberEntity):
     """Representation of a Tempo delay as a number entity."""
 
+    _attr_native_min_value = 0
+    _attr_native_max_value = 36000
+    _attr_native_step = 1
+    _attr_native_unit_of_measurement = TIME_SECONDS
+    _attr_mode = NumberMode.BOX
+    _attr_entity_category = EntityCategory.CONFIG
+    _attr_icon = "mdi:clock-time-two"
+
     def __init__(
         self,
         device_config: dict,
@@ -148,19 +159,12 @@ class TempoDelayNumber(IpxEntity, NumberEntity):
         """Initialize the entity."""
         super().__init__(device_config, ipx, coordinator, suffix_name="Delay")
         self.control = Tempo(ipx, self._ext_number)
-        self._attr_min_value = 0
-        self._attr_max_value = 36000
-        self._attr_step = 1
-        self._attr_unit_of_measurement = "s"
-        self._attr_mode = NumberMode.BOX
-        self._attr_entity_category = EntityCategory.CONFIG
-        self._attr_icon = "mdi:clock-time-two"
 
     @property
-    def value(self) -> int:
+    def native_value(self) -> int:
         """Return the current value."""
         return int(self.coordinator.data[self.control.ana_time_id]["value"])
 
-    async def async_set_value(self, value: float) -> None:
+    async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
-        await self.control.set_time(value)
+        await self.control.set_time(int(value))
