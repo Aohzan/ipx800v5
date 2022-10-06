@@ -22,7 +22,7 @@ L'intégration `ipx800v5` vous permet de contrôler et récupérer des informati
   - X-4VR via `cover` [`x4vr`]
   - X-8D via `binary_sensor` [`x8d`]
   - X-24D via `binary_sensor` [`x24d`]
-  - X-010V via `light` pour la gestion du niveau de sortie
+  - X-010V via `light` pour la gestion du niveau de sortie [`x010v`]
 - Objets
   - Thermostat via `climate` et `number` pour les réglages de preset [`thermostat`]
   - Counter via `number` [`counter`]
