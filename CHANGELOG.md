@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.1
+
+- Change x4fp mode state order
+
 ## 1.4.0
 
 - Add Octo and Open Collector i/o support

@@ -88,8 +88,6 @@ class X4FPClimate(IpxEntity, ClimateEntity):
     @property
     def _mode(self) -> X4FPMode:
         """Return the current mode enabled."""
-        if self.coordinator.data[self.control.io_stop_id] == "on":
-            return X4FPMode.STOP
         if self.coordinator.data[self.control.io_eco_id] == "on":
             return X4FPMode.ECO
         if self.coordinator.data[self.control.io_comfort_id] == "on":
@@ -100,6 +98,8 @@ class X4FPClimate(IpxEntity, ClimateEntity):
             return X4FPMode.COMFORT_2
         if self.coordinator.data[self.control.io_anti_freeze_id] == "on":
             return X4FPMode.ANTIFREEZE
+        if self.coordinator.data[self.control.io_stop_id] == "on":
+            return X4FPMode.STOP
 
     @property
     def hvac_mode(self) -> HVACMode:
