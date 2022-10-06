@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.0
+
+- Add Octo and Open Collector i/o support
+- Add X-010V support
+- bump pypx800v5
+
 ## 1.3.0
 
 - Migrate deprecated methods

@@ -1,6 +1,5 @@
 """Represent the IPX800V5 base entity."""
-from pypx800v5 import IPX800
-from pypx800v5.const import EXTENSIONS, IPX
+from pypx800v5 import EXTENSIONS, IPX, IPX800
 from voluptuous.util import Upper
 
 from homeassistant.const import (
@@ -39,8 +38,8 @@ class IpxEntity(CoordinatorEntity):
         device_config: dict,
         ipx: IPX800,
         coordinator: DataUpdateCoordinator,
-        suffix_name: str = None,
-        device_name: str = None,
+        suffix_name: str | None = None,
+        device_name: str | None = None,
     ) -> None:
         """Initialize the device."""
         super().__init__(coordinator)

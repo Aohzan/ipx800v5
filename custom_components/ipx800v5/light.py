@@ -3,8 +3,19 @@ from asyncio import gather as async_gather
 import logging
 from typing import Any
 
-from pypx800v5 import IPX800, X8R, XPWM, IPX800Relay, XDimmer
-from pypx800v5.const import EXT_X8R, EXT_XDIMMER, EXT_XPWM, IPX
+from pypx800v5 import (
+    EXT_X8R,
+    EXT_X010V,
+    EXT_XDIMMER,
+    EXT_XPWM,
+    IPX,
+    IPX800,
+    X8R,
+    X010V,
+    XPWM,
+    IPX800Relay,
+    XDimmer,
+)
 
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
@@ -38,14 +49,24 @@ from .tools_ipx_entity import IpxEntity
 _LOGGER = logging.getLogger(__name__)
 
 
-def scaleto255(value):
-    """Scale to Home-Assistant value."""
+def scalefrom100to255(value):
+    """Scale from classic value to Home-Assistant value."""
     return max(0, min(255, round((value * 255.0) / 100.0)))
+
+
+def scalefrom10to255(value):
+    """Scale from X-010V value to Home-Assistant value."""
+    return max(0, min(255, round((value * 10 * 255.0) / 100.0)))
 
 
 def scaleto100(value):
     """Scale to IPX800 value."""
     return max(0, min(100, round((value * 100.0) / 255.0)))
+
+
+def scaleto10(value):
+    """Scale to X-010V value."""
+    return max(0, min(10, round((value * 100.0) / 255.0 / 10)))
 
 
 async def async_setup_entry(
@@ -63,7 +84,7 @@ async def async_setup_entry(
     for device in devices:
         if device[CONF_EXT_TYPE] == IPX:
             entities.append(IpxLight(device, controller, coordinator))
-        if device[CONF_EXT_TYPE] == EXT_X8R:
+        elif device[CONF_EXT_TYPE] == EXT_X8R:
             entities.append(X8RLight(device, controller, coordinator))
         elif device[CONF_EXT_TYPE] == EXT_XDIMMER:
             entities.append(XDimmerLight(device, controller, coordinator))
@@ -78,6 +99,8 @@ async def async_setup_entry(
             and device.get(CONF_TYPE) == TYPE_XPWM_RGBW
         ):
             entities.append(XPWMRGBWLight(device, controller, coordinator))
+        elif device[CONF_EXT_TYPE] == EXT_X010V:
+            entities.append(X010VLight(device, controller, coordinator))
 
     async_add_entities(entities, True)
 
@@ -182,7 +205,9 @@ class XDimmerLight(IpxEntity, LightEntity):
     @property
     def brightness(self) -> int:
         """Return the brightness of the light."""
-        return scaleto255(self.coordinator.data[self.control.ana_state_id]["value"])
+        return scalefrom100to255(
+            self.coordinator.data[self.control.ana_state_id]["value"]
+        )
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the light."""
@@ -241,7 +266,9 @@ class XPWMLight(IpxEntity, LightEntity):
     @property
     def brightness(self) -> int:
         """Return the brightness of the light."""
-        return scaleto255(self.coordinator.data[self.control.ana_state_id]["value"])
+        return scalefrom100to255(
+            self.coordinator.data[self.control.ana_state_id]["value"]
+        )
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the light."""
@@ -307,13 +334,13 @@ class XPWMRGBLight(IpxEntity, LightEntity):
     @property
     def rgb_color(self) -> tuple[int, int, int]:
         """Return the RGB color from RGB levels."""
-        level_r = scaleto255(
+        level_r = scalefrom100to255(
             self.coordinator.data[self.xpwm_rgb_r.ana_state_id]["value"]
         )
-        level_g = scaleto255(
+        level_g = scalefrom100to255(
             self.coordinator.data[self.xpwm_rgb_g.ana_state_id]["value"]
         )
-        level_b = scaleto255(
+        level_b = scalefrom100to255(
             self.coordinator.data[self.xpwm_rgb_b.ana_state_id]["value"]
         )
         return (level_r, level_g, level_b)
@@ -434,16 +461,16 @@ class XPWMRGBWLight(IpxEntity, LightEntity):
     @property
     def rgbw_color(self) -> tuple[int, int, int, int]:
         """Return the RGB color from RGB levels."""
-        level_r = scaleto255(
+        level_r = scalefrom100to255(
             self.coordinator.data[self.xpwm_rgbw_r.ana_state_id]["value"]
         )
-        level_g = scaleto255(
+        level_g = scalefrom100to255(
             self.coordinator.data[self.xpwm_rgbw_g.ana_state_id]["value"]
         )
-        level_b = scaleto255(
+        level_b = scalefrom100to255(
             self.coordinator.data[self.xpwm_rgbw_b.ana_state_id]["value"]
         )
-        level_w = scaleto255(
+        level_w = scalefrom100to255(
             self.coordinator.data[self.xpwm_rgbw_w.ana_state_id]["value"]
         )
         return (level_r, level_g, level_b, level_w)
@@ -512,4 +539,52 @@ class XPWMRGBWLight(IpxEntity, LightEntity):
             self.xpwm_rgbw_g.off(self._transition * 1000),
             self.xpwm_rgbw_b.off(self._transition * 1000),
         )
+        await self.coordinator.async_request_refresh()
+
+
+class X010VLight(IpxEntity, LightEntity):
+    """Representation of a X-010V output as a light."""
+
+    _attr_supported_features = LightEntityFeature.TRANSITION
+    _attr_supported_color_modes = {ColorMode.BRIGHTNESS}
+    _attr_color_mode = ColorMode.BRIGHTNESS
+
+    def __init__(
+        self,
+        device_config: dict,
+        ipx: IPX800,
+        coordinator: DataUpdateCoordinator,
+    ) -> None:
+        """Initialize the class XDimmerLight."""
+        super().__init__(device_config, ipx, coordinator)
+        self.control = X010V(ipx, self._ext_number, self._io_number)
+
+    @property
+    def is_on(self) -> bool:
+        """Return if the output is on."""
+        return self.coordinator.data[self.control.io_state_id]["on"] == 1
+
+    @property
+    def brightness(self) -> int:
+        """Return the brightness of the output."""
+        return scalefrom10to255(
+            self.coordinator.data[self.control.ana_level_id]["value"]
+        )
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn on the output."""
+        if ATTR_BRIGHTNESS in kwargs:
+            await self.control.set_level(scaleto10(kwargs[ATTR_BRIGHTNESS]))
+        else:
+            await self.control.on()
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn off the output."""
+        await self.control.off()
+        await self.coordinator.async_request_refresh()
+
+    async def async_toggle(self, **kwargs: Any) -> None:
+        """Toggle the output."""
+        await self.control.toggle()
         await self.coordinator.async_request_refresh()

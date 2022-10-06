@@ -2,8 +2,17 @@
 import logging
 from typing import Any
 
-from pypx800v5 import IPX800, X8R, IPX800Relay, Tempo
-from pypx800v5.const import EXT_X8R, IPX, OBJECT_TEMPO, TYPE_IO
+from pypx800v5 import (
+    EXT_X8R,
+    IPX,
+    IPX800,
+    OBJECT_TEMPO,
+    TYPE_IO,
+    X8R,
+    IPX800OpenColl,
+    IPX800Relay,
+    Tempo,
+)
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
@@ -13,7 +22,14 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import CONF_DEVICES, CONF_EXT_TYPE, CONTROLLER, COORDINATOR, DOMAIN
+from .const import (
+    CONF_DEVICES,
+    CONF_EXT_TYPE,
+    CONTROLLER,
+    COORDINATOR,
+    DOMAIN,
+    TYPE_IPX_OPENCOLL,
+)
 from .tools_ipx_entity import IpxEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -35,7 +51,10 @@ async def async_setup_entry(
         if device.get(CONF_TYPE) == TYPE_IO:
             entities.append(IOSwitch(device, controller, coordinator))
         elif device[CONF_EXT_TYPE] == IPX:
-            entities.append(IpxSwitch(device, controller, coordinator))
+            if device.get(CONF_TYPE) == TYPE_IPX_OPENCOLL:
+                entities.append(IpxOpenCollSwitch(device, controller, coordinator))
+            else:
+                entities.append(IpxSwitch(device, controller, coordinator))
         elif device[CONF_EXT_TYPE] == EXT_X8R:
             entities.append(X8RSwitch(device, controller, coordinator))
         elif device[CONF_EXT_TYPE] == OBJECT_TEMPO:
@@ -69,7 +88,7 @@ class IOSwitch(IpxEntity, SwitchEntity):
 
 
 class IpxSwitch(IpxEntity, SwitchEntity):
-    """Representation of a IPX Switch through relay."""
+    """Representation of a IPX Relay Switch through relay."""
 
     def __init__(
         self,
@@ -80,6 +99,40 @@ class IpxSwitch(IpxEntity, SwitchEntity):
         """Initialize the RelaySwitch."""
         super().__init__(device_config, ipx, coordinator)
         self.control = IPX800Relay(ipx, self._io_number)
+
+    @property
+    def is_on(self) -> bool:
+        """Return the state."""
+        return self.coordinator.data[self.control.io_state_id]["on"] is True
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn on the switch."""
+        await self.control.on()
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn off the switch."""
+        await self.control.off()
+        await self.coordinator.async_request_refresh()
+
+    async def async_toggle(self, **kwargs: Any) -> None:
+        """Toggle the switch."""
+        await self.control.toggle()
+        await self.coordinator.async_request_refresh()
+
+
+class IpxOpenCollSwitch(IpxEntity, SwitchEntity):
+    """Representation of a IPX Open Collector Switch through relay."""
+
+    def __init__(
+        self,
+        device_config: dict,
+        ipx: IPX800,
+        coordinator: DataUpdateCoordinator,
+    ) -> None:
+        """Initialize the RelaySwitch."""
+        super().__init__(device_config, ipx, coordinator)
+        self.control = IPX800OpenColl(ipx, self._io_number)
 
     @property
     def is_on(self) -> bool:

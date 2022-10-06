@@ -1,8 +1,16 @@
 """Support for IPX800 V5 numbers."""
 import logging
 
-from pypx800v5 import IPX800, Counter, Tempo, Thermostat
-from pypx800v5.const import OBJECT_COUNTER, OBJECT_TEMPO, OBJECT_THERMOSTAT, TYPE_ANA
+from pypx800v5 import (
+    IPX800,
+    OBJECT_COUNTER,
+    OBJECT_TEMPO,
+    OBJECT_THERMOSTAT,
+    TYPE_ANA,
+    Counter,
+    Tempo,
+    Thermostat,
+)
 
 from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.components.sensor import SensorDeviceClass

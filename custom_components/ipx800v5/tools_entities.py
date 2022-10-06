@@ -2,8 +2,7 @@
 from itertools import groupby
 import logging
 
-from pypx800v5 import IPX800
-from pypx800v5.const import (
+from pypx800v5 import (
     API_CONFIG_NAME,
     API_CONFIG_TYPE,
     EXT_X4FP,
@@ -15,6 +14,7 @@ from pypx800v5.const import (
     EXT_XPWM,
     EXT_XTHL,
     IPX,
+    IPX800,
     OBJECT_COUNTER,
     OBJECT_TEMPO,
     OBJECT_THERMOSTAT,
@@ -33,6 +33,8 @@ from .const import (
     CONF_IO_NUMBER,
     CONF_IO_NUMBERS,
     DEFAULT_IPX_NAME,
+    TYPE_IPX_OPENCOLL,
+    TYPE_IPX_OPTO,
     TYPE_XPWM_RGB,
     TYPE_XPWM_RGBW,
 )
@@ -106,18 +108,19 @@ def get_device_in_devices_config(
     device = None
     # Filter on base keys
     found_devices = [
-        d
-        for d in devices_config
-        if str(d[CONF_EXT_TYPE]) == str(device_auto[CONF_EXT_TYPE])
-        and int(d[CONF_EXT_NUMBER]) == int(device_auto[CONF_EXT_NUMBER])
+        device_conf
+        for device_conf in devices_config
+        if str(device_conf[CONF_EXT_TYPE]) == str(device_auto[CONF_EXT_TYPE])
+        and int(device_conf[CONF_EXT_NUMBER]) == int(device_auto[CONF_EXT_NUMBER])
         and (
-            str(d[CONF_COMPONENT]) == str(device_auto[CONF_COMPONENT])
+            str(device_conf[CONF_COMPONENT]) == str(device_auto[CONF_COMPONENT])
             or (
                 str(device_auto[CONF_EXT_TYPE]) in [IPX, EXT_X8R]
                 and str(device_auto[CONF_COMPONENT]) in ["light", "switch"]
-                and str(d[CONF_COMPONENT]) in ["light", "switch"]
+                and str(device_conf[CONF_COMPONENT]) in ["light", "switch"]
             )
         )
+        and (device_conf.get(CONF_TYPE) == device_auto.get(CONF_TYPE))
     ]
     # Filter on others keys
     for device_config in found_devices:
@@ -198,7 +201,7 @@ def build_ipx_system_entities(ipx: IPX800, enable_diag_sensors: bool = False) ->
 def build_ipx_entities(
     entry_source: str, devices_config: list, auto_ext_list: list
 ) -> list:
-    """Build entities list for the IPX800 from config and discory."""
+    """Build entities list for the IPX800 from config and discovery."""
     entities = []
     # ipx
     if entry_source == "user" or IPX in auto_ext_list:
@@ -217,6 +220,22 @@ def build_ipx_entities(
                     },
                 )
             )
+        for i in range(4):
+            # open collector
+            entities.append(
+                get_device_in_devices_config(
+                    devices_config,
+                    {
+                        CONF_NAME: f"{DEFAULT_IPX_NAME} Open Collector {i + 1}",
+                        CONF_COMPONENT: "switch",
+                        CONF_EXT_TYPE: IPX,
+                        CONF_TYPE: TYPE_IPX_OPENCOLL,
+                        CONF_EXT_NUMBER: 0,
+                        CONF_IO_NUMBER: i + 1,
+                    },
+                )
+            )
+        for i in range(8):
             # digital inputs
             entities.append(
                 get_device_in_devices_config(
@@ -239,6 +258,21 @@ def build_ipx_entities(
                         CONF_NAME: f"{DEFAULT_IPX_NAME} Analog Input {i + 1}",
                         CONF_COMPONENT: "sensor",
                         CONF_EXT_TYPE: IPX,
+                        CONF_EXT_NUMBER: 0,
+                        CONF_IO_NUMBER: i + 1,
+                    },
+                )
+            )
+        for i in range(4):
+            # opto inputs
+            entities.append(
+                get_device_in_devices_config(
+                    devices_config,
+                    {
+                        CONF_NAME: f"{DEFAULT_IPX_NAME} Opto Input {i + 1}",
+                        CONF_COMPONENT: "binary_sensor",
+                        CONF_EXT_TYPE: IPX,
+                        CONF_TYPE: TYPE_IPX_OPTO,
                         CONF_EXT_NUMBER: 0,
                         CONF_IO_NUMBER: i + 1,
                     },

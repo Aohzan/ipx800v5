@@ -25,6 +25,8 @@ CONF_EXT_NUMBER = "ext_number"
 CONF_IO_NUMBER = "io_number"
 CONF_IO_NUMBERS = "io_numbers"
 
+TYPE_IPX_OPENCOLL = "opencoll"
+TYPE_IPX_OPTO = "opto"
 TYPE_XPWM_RGB = "xpwm_rgb"
 TYPE_XPWM_RGBW = "xpwm_rgbw"
 

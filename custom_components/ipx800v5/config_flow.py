@@ -1,13 +1,21 @@
 """Config flow to configure the ipx800v5 integration."""
 from itertools import groupby
 import logging
+from typing import Any
 
-from pypx800v5 import IPX800, IPX800CannotConnectError, IPX800InvalidAuthError
-from pypx800v5.const import API_CONFIG_NAME, EXT_X8R, IPX
+from pypx800v5 import (
+    API_CONFIG_NAME,
+    EXT_X8R,
+    IPX,
+    IPX800,
+    IPX800CannotConnectError,
+    IPX800InvalidAuthError,
+)
 import voluptuous as vol
 from voluptuous.util import Upper
 
 from homeassistant import config_entries
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_API_KEY,
     CONF_DEVICES,
@@ -17,6 +25,7 @@ from homeassistant.const import (
     CONF_SCAN_INTERVAL,
 )
 from homeassistant.core import callback
+from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
@@ -123,11 +132,13 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class IpxOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle a IPX800 options flow."""
 
-    def __init__(self, config_entry):
+    def __init__(self, config_entry: ConfigEntry) -> None:
         """Initialize."""
         self.config_entry = config_entry
 
-    async def async_step_init(self, user_input: dict = None):
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Manage the options."""
         if user_input is None:
             session = async_get_clientsession(self.hass, False)

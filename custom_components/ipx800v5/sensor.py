@@ -1,8 +1,7 @@
 """Support for IPX800 V5 sensors."""
 import logging
 
-from pypx800v5 import IPX800, XTHL, IPX800AnalogInput
-from pypx800v5.const import EXT_XTHL, IPX, TYPE_ANA
+from pypx800v5 import EXT_XTHL, IPX, IPX800, TYPE_ANA, XTHL, IPX800AnalogInput
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,

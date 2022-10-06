@@ -1,15 +1,22 @@
 """Support for IPX800 V5 binary sensors."""
 import logging
 
-from pypx800v5 import IPX800, X8D, X8R, X24D, IPX800DigitalInput, Tempo, Thermostat
-from pypx800v5.const import (
+from pypx800v5 import (
     EXT_X8D,
     EXT_X8R,
     EXT_X24D,
     IPX,
+    IPX800,
     OBJECT_TEMPO,
     OBJECT_THERMOSTAT,
     TYPE_IO,
+    X8D,
+    X8R,
+    X24D,
+    IPX800DigitalInput,
+    IPX800OptoInput,
+    Tempo,
+    Thermostat,
 )
 
 from homeassistant.components.binary_sensor import BinarySensorEntity
@@ -19,7 +26,14 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import CONF_DEVICES, CONF_EXT_TYPE, CONTROLLER, COORDINATOR, DOMAIN
+from .const import (
+    CONF_DEVICES,
+    CONF_EXT_TYPE,
+    CONTROLLER,
+    COORDINATOR,
+    DOMAIN,
+    TYPE_IPX_OPTO,
+)
 from .tools_ipx_entity import IpxEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -41,9 +55,14 @@ async def async_setup_entry(
         if device.get(CONF_TYPE) == TYPE_IO:
             entities.append(IOBinarySensor(device, controller, coordinator))
         elif device[CONF_EXT_TYPE] == IPX:
-            entities.append(
-                IpxDigitalInputBinarySensor(device, controller, coordinator)
-            )
+            if device.get(CONF_TYPE) == TYPE_IPX_OPTO:
+                entities.append(
+                    IpxOptoInputBinarySensor(device, controller, coordinator)
+                )
+            else:
+                entities.append(
+                    IpxDigitalInputBinarySensor(device, controller, coordinator)
+                )
         elif device[CONF_EXT_TYPE] == EXT_X8R:
             entities.append(X8RLongPushBinarySensor(device, controller, coordinator))
         elif device[CONF_EXT_TYPE] == EXT_X24D:
@@ -78,6 +97,22 @@ class IpxDigitalInputBinarySensor(IpxEntity, BinarySensorEntity):
         """Initialize the digital input sensor of the IPX800."""
         super().__init__(device_config, ipx, coordinator)
         self.control = IPX800DigitalInput(ipx, self._io_number)
+
+    @property
+    def is_on(self) -> bool:
+        """Return the current value."""
+        return self.coordinator.data[self.control.io_state_id]["on"] is True
+
+
+class IpxOptoInputBinarySensor(IpxEntity, BinarySensorEntity):
+    """Representation of a IPX Opto input as a binary sensor."""
+
+    def __init__(
+        self, device_config: dict, ipx: IPX800, coordinator: DataUpdateCoordinator
+    ) -> None:
+        """Initialize the opto input sensor of the IPX800."""
+        super().__init__(device_config, ipx, coordinator)
+        self.control = IPX800OptoInput(ipx, self._io_number)
 
     @property
     def is_on(self) -> bool:

@@ -7,7 +7,9 @@ L'intégration `ipx800v5` vous permet de contrôler et récupérer des informati
 
 - IPX800 [`ipx`]
   - Relais via `switch` ou `light`
+  - Sorties collecteurs ouverts via `switch` (en spécifiant `type: opencoll` dans la configuration yaml)
   - Entrées digitales via `binary_sensor`
+  - Entrées opto-isolées via `binary_sensor` (en spécifiant `type: opto` dans la configuration yaml)
   - Entrées analogiques via `sensor`
   - Informations systèmes via `sensor`
   - Reboot via `button`
@@ -20,6 +22,7 @@ L'intégration `ipx800v5` vous permet de contrôler et récupérer des informati
   - X-4VR via `cover` [`x4vr`]
   - X-8D via `binary_sensor` [`x8d`]
   - X-24D via `binary_sensor` [`x24d`]
+  - X-010V via `light` pour la gestion du niveau de sortie
 - Objets
   - Thermostat via `climate` et `number` pour les réglages de preset [`thermostat`]
   - Counter via `number` [`counter`]
@@ -122,6 +125,16 @@ ipx800v5:
         component: sensor
         device_class: illuminance
         icon: mdi:white-balance-sunny
+      - name: Ma sortie collecteur ouvert
+        component: "switch"
+        ext_type: ipx
+        type: opencoll
+        io_number: 4
+      - component: binary_sensor
+        name: Mon entrée opto-isolée
+        ext_type: ipx
+        type: opto
+        io_number: 3
       ## x8r
       - name: Porte Garage
         ext_type: x8r

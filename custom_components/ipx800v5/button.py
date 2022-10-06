@@ -1,7 +1,7 @@
 """Support for IPX800 V5 button."""
 import logging
 
-from pypx800v5.const import IPX
+from pypx800v5 import IPX
 
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry

@@ -2,8 +2,7 @@
 import logging
 from typing import Any
 
-from pypx800v5 import IPX800, X4VR
-from pypx800v5.const import EXT_X4VR
+from pypx800v5 import EXT_X4VR, IPX800, X4VR
 
 from homeassistant.components.cover import (
     ATTR_POSITION,
