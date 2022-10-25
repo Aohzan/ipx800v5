@@ -1,7 +1,6 @@
 """Config flow to configure the ipx800v5 integration."""
 from itertools import groupby
 import logging
-from typing import Any
 
 from pypx800v5 import (
     API_CONFIG_NAME,
@@ -15,7 +14,7 @@ import voluptuous as vol
 from voluptuous.util import Upper
 
 from homeassistant import config_entries
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import ConfigEntry, OptionsFlow
 from homeassistant.const import (
     CONF_API_KEY,
     CONF_DEVICES,
@@ -64,7 +63,7 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Initialize class variables."""
         self.base_config = {}
 
-    async def async_step_import(self, import_info):
+    async def async_step_import(self, import_info) -> FlowResult:
         """Import an advanced configuration from YAML config."""
         entry = await self.async_set_unique_id(f"{DOMAIN}, {import_info[CONF_HOST]}")
 
@@ -82,9 +81,9 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             title=f"{import_info[CONF_NAME]} (from yaml)", data=import_info
         )
 
-    async def async_step_user(self, user_input=None):
+    async def async_step_user(self, user_input=None) -> FlowResult:
         """Get configuration from the user."""
-        errors = {}
+        errors: dict[str, str] = {}
         if user_input is None:
             return self.async_show_form(
                 step_id="user", data_schema=BASE_SCHEMA, errors=errors
@@ -106,7 +105,7 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.base_config = user_input
         return await self.async_step_params()
 
-    async def async_step_params(self, user_input=None):
+    async def async_step_params(self, user_input=None) -> FlowResult:
         """Handle the param flow to customize according to device config."""
         if user_input is None:
             session = async_get_clientsession(self.hass, False)
@@ -124,7 +123,7 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry):
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
         """Define the config flow to handle options."""
         return IpxOptionsFlowHandler(config_entry)
 
@@ -136,9 +135,7 @@ class IpxOptionsFlowHandler(config_entries.OptionsFlow):
         """Initialize."""
         self.config_entry = config_entry
 
-    async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    async def async_step_init(self, user_input=None) -> FlowResult:
         """Manage the options."""
         if user_input is None:
             session = async_get_clientsession(self.hass, False)
@@ -181,7 +178,10 @@ async def _test_connection(session, base_config):
 
 
 async def _build_param_schema(
-    session, base_config: dict, options: dict, entry_source: str
+    session,
+    base_config,
+    options,
+    entry_source,
 ):
     """Build schema for params and options flow according to the IPX800 config."""
     config = {**base_config, **options}
@@ -267,7 +267,7 @@ async def _build_param_schema(
     return schema
 
 
-def config_organizer(base_config: dict, user_input: dict):
+def config_organizer(base_config, user_input):
     """Organize devices config to be a list like yaml schema."""
     config = dict(base_config)
 

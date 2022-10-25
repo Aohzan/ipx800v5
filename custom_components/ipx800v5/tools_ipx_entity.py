@@ -38,8 +38,8 @@ class IpxEntity(CoordinatorEntity):
         device_config: dict,
         ipx: IPX800,
         coordinator: DataUpdateCoordinator,
-        suffix_name: str | None = None,
-        device_name: str | None = None,
+        suffix_name=None,
+        device_name=None,
     ) -> None:
         """Initialize the device."""
         super().__init__(coordinator)

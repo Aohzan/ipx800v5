@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.2
+
+- Rollback typing for python 3.9 compatibility
+
 ## 1.4.1
 
 - Change x4fp mode state order
