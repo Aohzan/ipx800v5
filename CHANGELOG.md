@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.3
+
+- Fix X4FP climate
+
 ## 1.4.2
 
 - Rollback typing for python 3.9 compatibility
