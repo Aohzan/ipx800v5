@@ -11,6 +11,7 @@ from homeassistant.const import (
     CONF_UNIT_OF_MEASUREMENT,
 )
 from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -79,21 +80,15 @@ class IpxEntity(CoordinatorEntity):
 
         configuration_url = f"http://{self.ipx.host}:{self.ipx.port}/"
 
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, slugify(self._device_name))},
-            "default_name": self._device_name,
-            "manufacturer": "GCE Electronics",
-            "via_device": (DOMAIN, slugify(coordinator.name)),
-            "configuration_url": configuration_url,
-        }
-        if self._ext_type in EXTENSIONS:
-            self._attr_device_info.update({"model": Upper(self._ext_type)})
-        else:
-            self._attr_device_info.update({"model": "IPX800 V5"})
-        if self._ext_type == IPX:
-            self._attr_device_info.update(
-                {
-                    "sw_version": self.ipx.firmware_version,
-                    "connections": {(CONNECTION_NETWORK_MAC, self.ipx.mac_address)},
-                }
-            )
+        model = Upper(self._ext_type) if self._ext_type in EXTENSIONS else "IPX800 V5"
+        sw_version = self.ipx.firmware_version if self._ext_type == IPX else None
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, slugify(self._device_name))},
+            via_device=(DOMAIN, coordinator.name),
+            name=self._device_name,
+            manufacturer="GCE Electronics",
+            model=model,
+            configuration_url=configuration_url,
+            sw_version=sw_version,
+            connections={(CONNECTION_NETWORK_MAC, str(self.ipx.mac_address))},
+        )

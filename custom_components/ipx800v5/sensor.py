@@ -9,7 +9,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_NAME, CONF_TYPE
+from homeassistant.const import CONF_NAME, CONF_TYPE, LIGHT_LUX, PERCENTAGE, TEMP_CELSIUS
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
@@ -44,7 +44,7 @@ async def async_setup_entry(
                     controller,
                     coordinator,
                     SensorDeviceClass.TEMPERATURE,
-                    "°C",
+                    TEMP_CELSIUS,
                     "TEMP",
                     "Temperature",
                     device[CONF_NAME],
@@ -56,7 +56,7 @@ async def async_setup_entry(
                     controller,
                     coordinator,
                     SensorDeviceClass.HUMIDITY,
-                    "%",
+                    PERCENTAGE,
                     "HUM",
                     "Humidity",
                     device[CONF_NAME],
@@ -68,7 +68,7 @@ async def async_setup_entry(
                     controller,
                     coordinator,
                     SensorDeviceClass.ILLUMINANCE,
-                    "lx",
+                    LIGHT_LUX,
                     "LUM",
                     "Luminance",
                     device[CONF_NAME],

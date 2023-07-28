@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.4
+
+- Fix DeviceInfo for HA 2023.8 release
+
 ## 1.4.3
 
 - Fix X4FP climate
