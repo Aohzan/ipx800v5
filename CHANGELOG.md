@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.5
+
+- Bump pypx800v5 to fix missing extensions: X010V and X8D
+
 ## 1.4.4
 
 - Fix DeviceInfo for HA 2023.8 release

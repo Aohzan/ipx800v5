@@ -22,8 +22,13 @@ from pypx800v5 import (
     TYPE_IO,
 )
 
-from homeassistant.const import CONF_ENTITY_CATEGORY, CONF_ID, CONF_NAME, CONF_TYPE
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.const import (
+    CONF_ENTITY_CATEGORY,
+    CONF_ID,
+    CONF_NAME,
+    CONF_TYPE,
+    EntityCategory,
+)
 
 from .const import (
     CONF_COMPONENT,
@@ -284,7 +289,7 @@ def build_ipx_entities(
 def build_extensions_entities(
     entry_source: str, ipx: IPX800, devices_config: list, auto_ext_list: list
 ) -> list:
-    """Build entities list for extensions from config and discory."""
+    """Build entities list for extensions from config and discovery."""
     entities = []
     ext_type = None
     for ext_type, extensions in groupby(
