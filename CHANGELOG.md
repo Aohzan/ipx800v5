@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.6
+
+- Fix deviceinfo via_device property
+
 ## 1.4.5
 
 - Bump pypx800v5 to fix missing extensions: X010V and X8D
