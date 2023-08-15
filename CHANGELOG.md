@@ -4,7 +4,7 @@
 
 - Fix deviceinfo for extensions
 - Fix X-010V auto configuration
- 
+
 ## 1.4.6
 
 - Fix deviceinfo via_device property
