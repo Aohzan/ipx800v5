@@ -80,17 +80,23 @@ class IpxEntity(CoordinatorEntity):
 
         configuration_url = f"http://{self.ipx.host}:{self.ipx.port}/"
 
-        device_model = (
-            Upper(self._ext_type) if self._ext_type in EXTENSIONS else "IPX800 V5"
-        )
-        device_sw_version = self.ipx.firmware_version if self._ext_type == IPX else None
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, slugify(self._device_name))},
-            via_device=(DOMAIN, slugify(coordinator.name)),
-            name=self._device_name,
-            manufacturer="GCE Electronics",
-            model=device_model,
-            configuration_url=configuration_url,
-            sw_version=device_sw_version,
-            connections={(CONNECTION_NETWORK_MAC, str(self.ipx.mac_address))},
-        )
+        if self._ext_type == IPX:
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, slugify(coordinator.name))},
+                via_device=(DOMAIN, slugify(coordinator.name)),
+                name=coordinator.name,
+                manufacturer="GCE Electronics",
+                model="IPX800 V5",
+                configuration_url=configuration_url,
+                sw_version=self.ipx.firmware_version,
+                connections={(CONNECTION_NETWORK_MAC, str(self.ipx.mac_address))},
+            )
+        else:
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, slugify(self._device_name))},
+                via_device=(DOMAIN, slugify(coordinator.name)),
+                name=self._device_name,
+                manufacturer="GCE Electronics",
+                model=Upper(self._ext_type),
+                configuration_url=configuration_url,
+            )
