@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.0
+
+- /!\ Update entities' unique_id to handle multiple extension, it will recreate your entities, it's recommended to delete this integration configuration before update
+- Bump pypx800v5 (ping method update)
+- Fix extension number to match IPX800 index
+- Fix devices creation
+
 ## 1.4.7
 
 - Fix deviceinfo for extensions
