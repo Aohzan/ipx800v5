@@ -10,8 +10,7 @@ from homeassistant.const import (
     CONF_NAME,
     CONF_UNIT_OF_MEASUREMENT,
 )
-from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, DeviceInfo
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -66,37 +65,40 @@ class IpxEntity(CoordinatorEntity):
         self._attr_icon = device_config.get(CONF_ICON)
         self._attr_entity_category = device_config.get(CONF_ENTITY_CATEGORY)
         self._attr_unique_id = "_".join(
-            [DOMAIN, self.ipx.host, self._component, slugify(self._attr_name)]
+            [
+                DOMAIN,
+                self.ipx.mac_address,
+                self._ext_type,
+                str(self._ext_number),
+                self._component,
+                slugify(self._attr_name),
+            ]
         )
-
-        if device_name:
-            self._device_name = device_name
-        elif self._ext_type == IPX:
-            self._device_name = coordinator.name
-        else:
-            self._device_name = device_config.get(
-                CONF_EXT_NAME, f"{Upper(self._ext_type)} N°{self._ext_number}"
-            )
 
         configuration_url = f"http://{self.ipx.host}:{self.ipx.port}/"
 
+        device_model = (
+            Upper(self._ext_type) if self._ext_type in EXTENSIONS else "IPX800 V5"
+        )
         if self._ext_type == IPX:
             self._attr_device_info = DeviceInfo(
-                identifiers={(DOMAIN, slugify(coordinator.name))},
-                via_device=(DOMAIN, slugify(coordinator.name)),
-                name=coordinator.name,
+                identifiers={(DOMAIN, self.ipx.mac_address)},
                 manufacturer="GCE Electronics",
-                model="IPX800 V5",
+                model=device_model,
+                name=coordinator.name,
                 configuration_url=configuration_url,
-                sw_version=self.ipx.firmware_version,
+                sw_version=self.ipx.firmware_version if self._ext_type == IPX else None,
                 connections={(CONNECTION_NETWORK_MAC, str(self.ipx.mac_address))},
             )
         else:
+            device_name = device_name or device_config.get(
+                CONF_EXT_NAME, f"{Upper(self._ext_type)} N°{self._ext_number}"
+            )
             self._attr_device_info = DeviceInfo(
-                identifiers={(DOMAIN, slugify(self._device_name))},
-                via_device=(DOMAIN, slugify(coordinator.name)),
-                name=self._device_name,
+                identifiers={(DOMAIN, slugify(device_name))},
                 manufacturer="GCE Electronics",
-                model=Upper(self._ext_type),
+                model=device_model,
+                name=device_name,
                 configuration_url=configuration_url,
+                via_device=(DOMAIN, self.ipx.mac_address),
             )
