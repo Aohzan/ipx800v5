@@ -10,7 +10,8 @@ from homeassistant.const import (
     CONF_NAME,
     CONF_UNIT_OF_MEASUREMENT,
 )
-from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, DeviceInfo
+from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
