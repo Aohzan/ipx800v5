@@ -132,8 +132,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     try:
-        if not await ipx.ping():
-            raise IPX800CannotConnectError()
+        await ipx.ping()
     except IPX800CannotConnectError as exception:
         _LOGGER.error(
             "Cannot connect to the %s IPX800 V5, check host and port",
@@ -292,6 +291,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def _async_update_listener(hass, config_entry):
+async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Handle options update."""
-    await hass.config_entries.async_reload(config_entry.entry_id)
+    await hass.config_entries.async_reload(entry.entry_id)
