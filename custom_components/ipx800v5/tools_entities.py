@@ -298,7 +298,7 @@ def build_extensions_entities(
     ):
         if entry_source == "user" or ext_type in auto_ext_list:
             _LOGGER.debug("Build entities for %s extension", ext_type)
-            ext_number = 1
+            ext_number = 0
             for extension in extensions:
                 if ext_type == EXT_X8R:
                     for i in range(8):
