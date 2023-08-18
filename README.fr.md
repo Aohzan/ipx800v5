@@ -79,7 +79,7 @@ Ajoutez votre configuration `ipx800v5` dans votre fichier `configuration.yaml`.
 | -------------- | ---------- | -------- | ------- | ------------------------------------------------------------------------------------ |
 | `name`         | string     | yes      | -       | Nom du l'appareil                                                                    |
 | `ext_type`     | string     | yes      | -       | Type d'extension ou d'objet [voir code entre crochets](#Fonctionnalités)             |
-| `ext_number`   | string     | no       | -       | Numéro d'extension, à partir de 1 (requis sauf pour `ipx`)                           |
+| `ext_number`   | string     | no       | -       | Numéro d'extension, à partir de 0 (requis sauf pour `ipx`)                           |
 | `ext_name`     | string     | no       | -       | Nom de l'extension                                                                   |
 | `component`    | string     | yes      | -       | Type d'entité       [voir les types concernés par extension/objet](#Fonctionnalités) |
 | `io_number`    | int        | no       | -       | Numéro de l'entrée/sortie concernée                                                  |
@@ -138,29 +138,34 @@ ipx800v5:
       ## x8r
       - name: Porte Garage
         ext_type: x8r
-        ext_number: 1
+        ext_number: 0
         io_number: 1
         component: switch
       - name: Lumière Garage
         ext_type: x8r
-        ext_number: 1
+        ext_number: 0
         io_number: 2
+        component: light
+      - name: Lumière Entrée
+        ext_type: x8r
+        ext_number: 1
+        io_number: 1
         component: light
       ## xdimmer
       - name: Lumière Salle à Manger
         ext_type: xdimmer
-        ext_number: 1
+        ext_number: 0
         io_number: 1
         component: light
       ## xpwm
       - name: Spots Cuisine
         ext_type: xpwm
-        ext_number: 1
+        ext_number: 0
         io_number: 1
         component: light
       - name: Bandeau de LED RGB
         ext_type: xpwm
-        ext_number: 1
+        ext_number: 0
         io_numbers: [9, 10, 11, 12]
         type: xpwm_rgbw
         transition: 1.5
@@ -168,16 +173,16 @@ ipx800v5:
       - name: Capteur Rez-de-Chaussée
         component: sensor
         ext_type: xthl
-        ext_number: 1
+        ext_number: 0
       ## objet thermostat
       - name: Thermostat
         component: climate
         ext_type: thermostat
-        ext_number: 1
+        ext_number: 0
       ## objet tempo
       - name: Présence Garage
         ext_type: tempo
-        ext_number: 1
+        ext_number: 0
         component: binary_sensor
         device_class: motion
       ## climate avec diode fil pilote 

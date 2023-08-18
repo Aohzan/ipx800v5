@@ -445,7 +445,7 @@ def build_objects_entities(
     for obj_type, objs in groupby(ipx.objects_config, lambda x: x[API_CONFIG_TYPE]):
         if entry_source == "user" or obj_type in auto_ext_list:
             _LOGGER.debug("Build entities for objects type of %s", obj_type)
-            obj_number = 1
+            obj_number = 0
             for obj in objs:
                 if obj_type == OBJECT_THERMOSTAT:
                     main_entity = get_device_in_devices_config(

@@ -3,8 +3,8 @@
 ## 1.5.0
 
 - /!\ Update entities' unique_id to handle multiple extension, it will recreate your entities, it's recommended to delete this integration configuration before update
+- /!\ Update extension and objects number to match IPX800 index, if you use yaml config, you must substract by one all `ext_number` (`1` => `0`)
 - Bump pypx800v5 (ping method update)
-- Fix extension number to match IPX800 index
 - Fix devices creation
 
 ## 1.4.7
