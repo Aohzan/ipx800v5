@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.1
+
+- Fix configflow for multiple extension
+- Fix ext/obj name matching
+
 ## 1.5.0
 
 - /!\ Update entities' unique_id to handle multiple extension, it will recreate your entities, it's recommended to delete this integration configuration before update
