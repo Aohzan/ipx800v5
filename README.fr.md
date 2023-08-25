@@ -1,5 +1,7 @@
 # Intégration ipx800v5 pour Home Assistant
 
+[![GitHub Release][releases-shield]][releases] [![License][license-shield]](LICENSE) [![Donate](https://img.shields.io/badge/$-support-ff69b4.svg?style=flat)](https://paypal.me/bstevensondev) [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
+
 Ceci est un _custom component_ ou une intégration pour [Home Assistant](https://www.home-assistant.io/).
 L'intégration `ipx800v5` vous permet de contrôler et récupérer des informations depuis votre [IPX800 v5 et ses extensions](http://gce-electronics.com/).
 
