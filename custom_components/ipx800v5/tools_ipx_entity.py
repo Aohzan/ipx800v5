@@ -10,8 +10,7 @@ from homeassistant.const import (
     CONF_NAME,
     CONF_UNIT_OF_MEASUREMENT,
 )
-from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, DeviceInfo
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -79,7 +78,9 @@ class IpxEntity(CoordinatorEntity):
         configuration_url = f"http://{self.ipx.host}:{self.ipx.port}/"
 
         device_model = (
-            Upper(self._ext_type) if self._ext_type in EXTENSIONS else "IPX800 V5"
+            Upper(self._ext_type[:1] + "-" + self._ext_type[1:])
+            if self._ext_type in EXTENSIONS
+            else "IPX800 V5"
         )
         if self._ext_type == IPX:
             self._attr_device_info = DeviceInfo(

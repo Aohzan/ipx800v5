@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.0
+
+- Add X-Display support
+
 ## 1.5.1
 
 - Fix configflow for multiple extension

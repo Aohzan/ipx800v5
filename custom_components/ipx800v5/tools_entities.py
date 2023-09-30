@@ -12,6 +12,7 @@ from pypx800v5 import (
     EXT_X8R,
     EXT_X24D,
     EXT_XDIMMER,
+    EXT_XDISPLAY,
     EXT_XPWM,
     EXT_XTHL,
     IPX,
@@ -72,6 +73,7 @@ def check_devices_config(devices_config: list) -> list:
                 EXT_X8R,
                 EXT_XDIMMER,
                 EXT_XPWM,
+                EXT_XDISPLAY,
             ]
             and CONF_EXT_NUMBER not in device_config
         ):
@@ -411,6 +413,36 @@ def build_extensions_entities(
                                 CONF_EXT_NAME: extension[API_CONFIG_NAME],
                             },
                         )
+                    )
+                elif ext_type == EXT_XDISPLAY:
+                    main_entity = get_device_in_devices_config(
+                        devices_config,
+                        {
+                            CONF_NAME: extension[API_CONFIG_NAME],
+                            CONF_COMPONENT: "select",
+                            CONF_EXT_TYPE: ext_type,
+                            CONF_EXT_NUMBER: ext_number,
+                            CONF_EXT_NAME: extension[API_CONFIG_NAME],
+                        },
+                    )
+                    entities.append(main_entity)
+                    entities.append(
+                        {
+                            CONF_NAME: main_entity[API_CONFIG_NAME],
+                            CONF_COMPONENT: "switch",
+                            CONF_EXT_TYPE: main_entity[CONF_EXT_TYPE],
+                            CONF_EXT_NUMBER: main_entity[CONF_EXT_NUMBER],
+                            CONF_EXT_NAME: main_entity[CONF_EXT_NAME],
+                        }
+                    )
+                    entities.append(
+                        {
+                            CONF_NAME: main_entity[API_CONFIG_NAME],
+                            CONF_COMPONENT: "sensor",
+                            CONF_EXT_TYPE: main_entity[CONF_EXT_TYPE],
+                            CONF_EXT_NUMBER: main_entity[CONF_EXT_NUMBER],
+                            CONF_EXT_NAME: main_entity[CONF_EXT_NAME],
+                        }
                     )
                 elif ext_type == EXT_X010V:
                     for i in range(4):

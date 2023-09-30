@@ -4,6 +4,7 @@ from typing import Any
 
 from pypx800v5 import (
     EXT_X8R,
+    EXT_XDISPLAY,
     IPX,
     IPX800,
     OBJECT_TEMPO,
@@ -12,13 +13,13 @@ from pypx800v5 import (
     IPX800OpenColl,
     IPX800Relay,
     Tempo,
+    XDisplay,
 )
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_TYPE
+from homeassistant.const import CONF_TYPE, EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
@@ -57,6 +58,9 @@ async def async_setup_entry(
                 entities.append(IpxSwitch(device, controller, coordinator))
         elif device[CONF_EXT_TYPE] == EXT_X8R:
             entities.append(X8RSwitch(device, controller, coordinator))
+        elif device[CONF_EXT_TYPE] == EXT_XDISPLAY:
+            entities.append(XDisplayScreenStateSwitch(device, controller, coordinator))
+            entities.append(XDisplayScreenLockSwitch(device, controller, coordinator))
         elif device[CONF_EXT_TYPE] == OBJECT_TEMPO:
             entities.append(TempoEnableSwitch(device, controller, coordinator))
 
@@ -186,6 +190,88 @@ class X8RSwitch(IpxEntity, SwitchEntity):
     async def async_toggle(self, **kwargs: Any) -> None:
         """Toggle the switch."""
         await self.control.toggle()
+        await self.coordinator.async_request_refresh()
+
+
+class XDisplayScreenStateSwitch(IpxEntity, SwitchEntity):
+    """Representation of a X-Display screen state switch."""
+
+    def __init__(
+        self,
+        device_config: dict,
+        ipx: IPX800,
+        coordinator: DataUpdateCoordinator,
+    ) -> None:
+        """Initialize the switch."""
+        super().__init__(device_config, ipx, coordinator, suffix_name="Screen state")
+        self.control = XDisplay(ipx, self._ext_number)
+
+    @property
+    def is_on(self) -> bool:
+        """Return the state."""
+        return self.coordinator.data[self.control.io_on_screen_id]["on"] is not True
+
+    @property
+    def icon(self) -> str:
+        """Return icon according to state."""
+        if self.is_on:
+            return "mdi:television"
+        return "mdi:television-off"
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn on the switch."""
+        await self.control.screen_on()
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn off the switch."""
+        await self.control.screen_off()
+        await self.coordinator.async_request_refresh()
+
+    async def async_toggle(self, **kwargs: Any) -> None:
+        """Toggle the switch."""
+        await self.control.screen_toggle()
+        await self.coordinator.async_request_refresh()
+
+
+class XDisplayScreenLockSwitch(IpxEntity, SwitchEntity):
+    """Representation of a X-Display screen lock switch."""
+
+    def __init__(
+        self,
+        device_config: dict,
+        ipx: IPX800,
+        coordinator: DataUpdateCoordinator,
+    ) -> None:
+        """Initialize the switch."""
+        super().__init__(device_config, ipx, coordinator, suffix_name="Screen lock")
+        self.control = XDisplay(ipx, self._ext_number)
+
+    @property
+    def is_on(self) -> bool:
+        """Return the state."""
+        return self.coordinator.data[self.control.io_lock_screen_id]["on"] is True
+
+    @property
+    def icon(self) -> str:
+        """Return icon according to state."""
+        if self.is_on:
+            return "mdi:lock"
+        return "mdi:lock-open-variant"
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn on the switch."""
+        await self.control.screen_lock()
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn off the switch."""
+        await self.control.screen_unlock()
+        await self.coordinator.async_request_refresh()
+
+    async def async_toggle(self, **kwargs: Any) -> None:
+        """Toggle the switch."""
+        await self.control.screen_toggle_lock()
         await self.coordinator.async_request_refresh()
 
 

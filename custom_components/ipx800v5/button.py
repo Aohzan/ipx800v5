@@ -19,7 +19,7 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the IPX800 switches."""
+    """Set up the IPX800 buttons."""
     controller = hass.data[DOMAIN][entry.entry_id][CONTROLLER]
     coordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
     devices = hass.data[DOMAIN][entry.entry_id][CONF_DEVICES]["button"]
@@ -34,7 +34,7 @@ async def async_setup_entry(
 
 
 class RebootButton(IpxEntity, ButtonEntity):
-    """Representation of a IPX Counter as a number entity."""
+    """Representation of a reboot IPX button entity."""
 
     async def async_press(self) -> None:
         """Handle the button press."""

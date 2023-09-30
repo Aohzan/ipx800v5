@@ -39,4 +39,5 @@ PLATFORMS = [
     "climate",
     "number",
     "button",
+    "select",
 ]
