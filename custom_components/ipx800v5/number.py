@@ -12,12 +12,10 @@ from pypx800v5 import (
     Thermostat,
 )
 
-from homeassistant.components.number import NumberEntity, NumberMode
-from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_TYPE, TEMP_CELSIUS, TIME_SECONDS
+from homeassistant.const import CONF_TYPE, EntityCategory, UnitOfTemperature, UnitOfTime
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
@@ -113,8 +111,8 @@ class ThermostatParamNumber(IpxEntity, NumberEntity):
     _attr_native_max_value = 35
     _attr_native_step = 0.1
     _attr_entity_category = EntityCategory.CONFIG
-    _attr_device_class = SensorDeviceClass.TEMPERATURE
-    _attr_native_unit_of_measurement = TEMP_CELSIUS
+    _attr_device_class = NumberDeviceClass.TEMPERATURE
+    _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
 
     def __init__(
         self,
@@ -153,7 +151,7 @@ class TempoDelayNumber(IpxEntity, NumberEntity):
     _attr_native_min_value = 0
     _attr_native_max_value = 36000
     _attr_native_step = 1
-    _attr_native_unit_of_measurement = TIME_SECONDS
+    _attr_native_unit_of_measurement = UnitOfTime.SECONDS
     _attr_mode = NumberMode.BOX
     _attr_entity_category = EntityCategory.CONFIG
     _attr_icon = "mdi:clock-time-two"

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.1
+
+- Update deprecated code
+
 ## 1.6.0
 
 - Add X-Display support
