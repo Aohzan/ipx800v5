@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.2
+
+- Fix X-010V level
+
 ## 1.6.1
 
 - Update deprecated code

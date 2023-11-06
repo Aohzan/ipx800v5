@@ -53,20 +53,9 @@ def scalefrom100to255(value):
     """Scale from classic value to Home-Assistant value."""
     return max(0, min(255, round((value * 255.0) / 100.0)))
 
-
-def scalefrom10to255(value):
-    """Scale from X-010V value to Home-Assistant value."""
-    return max(0, min(255, round((value * 10 * 255.0) / 100.0)))
-
-
 def scaleto100(value):
     """Scale to IPX800 value."""
     return max(0, min(100, round((value * 100.0) / 255.0)))
-
-
-def scaleto10(value):
-    """Scale to X-010V value."""
-    return max(0, min(10, round((value * 100.0) / 255.0 / 10)))
 
 
 async def async_setup_entry(
@@ -567,14 +556,14 @@ class X010VLight(IpxEntity, LightEntity):
     @property
     def brightness(self) -> int:
         """Return the brightness of the output."""
-        return scalefrom10to255(
+        return scalefrom100to255(
             self.coordinator.data[self.control.ana_level_id]["value"]
         )
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the output."""
         if ATTR_BRIGHTNESS in kwargs:
-            await self.control.set_level(scaleto10(kwargs[ATTR_BRIGHTNESS]))
+            await self.control.set_level(scaleto100(kwargs[ATTR_BRIGHTNESS]))
         else:
             await self.control.on()
         await self.coordinator.async_request_refresh()
