@@ -120,7 +120,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up the IPX800v5."""
     hass.data.setdefault(DOMAIN, {})
 
-    config = entry.data | entry.options
+    config = entry.options | entry.data
 
     session = async_get_clientsession(hass, False)
 

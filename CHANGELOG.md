@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.3
+
+- Fix options merging with yaml configuration
+
 ## 1.6.2
 
 - Fix X-010V level

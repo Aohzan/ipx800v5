@@ -4,14 +4,14 @@ import logging
 from typing import Any
 
 from pypx800v5 import (
-    EXT_X8R,
     EXT_X010V,
+    EXT_X8R,
     EXT_XDIMMER,
     EXT_XPWM,
     IPX,
     IPX800,
-    X8R,
     X010V,
+    X8R,
     XPWM,
     IPX800Relay,
     XDimmer,
@@ -52,6 +52,7 @@ _LOGGER = logging.getLogger(__name__)
 def scalefrom100to255(value):
     """Scale from classic value to Home-Assistant value."""
     return max(0, min(255, round((value * 255.0) / 100.0)))
+
 
 def scaleto100(value):
     """Scale to IPX800 value."""
