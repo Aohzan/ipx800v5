@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.4
+
+- Replace deprecated TEMP_CELCIUS constant by Enum
+
 ## 1.6.3
 
 - Fix options merging with yaml configuration
