@@ -63,7 +63,12 @@ async def async_setup_entry(
 class X4FPClimate(IpxEntity, ClimateEntity):
     """Representation of a IPX Climate through X4FP."""
 
-    _attr_supported_features = ClimateEntityFeature.PRESET_MODE
+    _attr_supported_features = (
+        ClimateEntityFeature.PRESET_MODE
+        | ClimateEntityFeature.TURN_OFF
+        | ClimateEntityFeature.TURN_ON
+    )
+    _enable_turn_on_off_backwards_compatibility = False
     _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
     _attr_preset_modes = [
         PRESET_COMFORT,
@@ -151,11 +156,24 @@ class X4FPClimate(IpxEntity, ClimateEntity):
             await self.control.set_mode(X4FPMode.STOP)
         await self.coordinator.async_request_refresh()
 
+    async def async_turn_off(self) -> None:
+        """Turn off."""
+        await self.async_set_hvac_mode(HVACMode.OFF)
+
+    async def async_turn_on(self) -> None:
+        """Turn on."""
+        await self.async_set_hvac_mode(HVACMode.HEAT)
+
 
 class RelayClimate(IpxEntity, ClimateEntity):
     """Representation of a IPX Climate through 2 relais."""
 
-    _attr_supported_features = ClimateEntityFeature.PRESET_MODE
+    _attr_supported_features = (
+        ClimateEntityFeature.PRESET_MODE
+        | ClimateEntityFeature.TURN_OFF
+        | ClimateEntityFeature.TURN_ON
+    )
+    _enable_turn_on_off_backwards_compatibility = False
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
     _attr_preset_modes = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY, PRESET_NONE]
@@ -236,14 +254,26 @@ class RelayClimate(IpxEntity, ClimateEntity):
             await self.control_plus.on()
         await self.coordinator.async_request_refresh()
 
+    async def async_turn_off(self) -> None:
+        """Turn off."""
+        await self.async_set_hvac_mode(HVACMode.OFF)
+
+    async def async_turn_on(self) -> None:
+        """Turn on."""
+        await self.async_set_hvac_mode(HVACMode.HEAT)
+
 
 class ThermostatClimate(IpxEntity, ClimateEntity):
     """Representation of a IPX Thermostat."""
 
     _attr_target_temperature_step = 0.1
     _attr_supported_features = (
-        ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.TARGET_TEMPERATURE
+        ClimateEntityFeature.PRESET_MODE
+        | ClimateEntityFeature.TARGET_TEMPERATURE
+        | ClimateEntityFeature.TURN_OFF
+        | ClimateEntityFeature.TURN_ON
     )
+    _enable_turn_on_off_backwards_compatibility = False
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
     _attr_preset_modes = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY, PRESET_NONE]
@@ -325,3 +355,11 @@ class ThermostatClimate(IpxEntity, ClimateEntity):
         else:
             await self.control.off()
         await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self) -> None:
+        """Turn off."""
+        await self.async_set_hvac_mode(HVACMode.OFF)
+
+    async def async_turn_on(self) -> None:
+        """Turn on."""
+        await self.async_set_hvac_mode(HVACMode.HEAT)
