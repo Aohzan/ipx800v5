@@ -2,12 +2,7 @@
 from datetime import timedelta
 import logging
 
-from pypx800v5 import (
-    IPX800,
-    OBJECT_PUSH,
-    IPX800CannotConnectError,
-    IPX800InvalidAuthError,
-)
+from pypx800v5 import IPX800, IPX800CannotConnectError, IPX800InvalidAuthError
 import voluptuous as vol
 
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
@@ -49,7 +44,6 @@ from .const import (
     DEFAULT_TRANSITION,
     DOMAIN,
     PLATFORMS,
-    PUSH_USERNAME,
     REQUEST_REFRESH_DELAY,
     UNDO_UPDATE_LISTENER,
 )
@@ -235,41 +229,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             IpxRequestRefreshView(
                 config[CONF_HOST], config[CONF_PUSH_PASSWORD], coordinator
             )
-        )
-
-        async def service_create_push_handler(call):
-            """Handle the service call."""
-            entity_id = call.data["entity_id"]
-            auth_token = call.data["auth_token"]
-            homeassistant_ip = call.data["homeassistant_ip"]
-            homeassistant_port = int(call.data["homeassistant_port"])
-            _LOGGER.info("Create PUSH object on the IPX800 for %s entity", entity_id)
-            push_object = await ipx.create_object(
-                OBJECT_PUSH,
-                {
-                    "name": f"HA {entity_id}"[:30],
-                    "offMode": True,
-                    "onMode": True,
-                    "authMode": "BASIC",
-                    "username": PUSH_USERNAME,
-                    "password": config[CONF_PUSH_PASSWORD],
-                    "method": "GET",
-                    "host": homeassistant_ip,
-                    "port": homeassistant_port,
-                },
-                auth_token,
-            )
-            await ipx.update_str(
-                push_object["onUri_id"],
-                f"/api/ipx800v5/{entity_id}/on",
-            )
-            await ipx.update_str(
-                push_object["offUri_id"],
-                f"/api/ipx800v5/{entity_id}/off",
-            )
-
-        hass.services.async_register(
-            DOMAIN, "create_push_object", service_create_push_handler
         )
     else:
         _LOGGER.info(
