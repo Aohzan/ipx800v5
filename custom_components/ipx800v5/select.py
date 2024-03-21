@@ -27,11 +27,11 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
     devices = hass.data[DOMAIN][entry.entry_id][CONF_DEVICES]["select"]
 
-    entities: list[SelectEntity] = []
-
-    for device in devices:
-        if device[CONF_EXT_TYPE] == EXT_XDISPLAY:
-            entities.append(XDisplayScreenSelect(device, controller, coordinator))
+    entities: list[SelectEntity] = [
+        XDisplayScreenSelect(device, controller, coordinator)
+        for device in devices
+        if device[CONF_EXT_TYPE] == EXT_XDISPLAY
+    ]
 
     async_add_entities(entities, True)
 
@@ -58,13 +58,25 @@ class XDisplayScreenSelect(IpxEntity, SelectEntity):
     @property
     def current_option(self) -> str | None:
         """Return the current screen."""
-        return self.control.screens[
+        screen_id = int(
             self.coordinator.data[self.control.ana_current_screen_id]["value"]
-        ].name
+        )
+        if len(self.control.screens) < screen_id + 1:
+            _LOGGER.warning(
+                "X-Display current screen #%s is not recognize, please reload the integration to refresh screens",
+                screen_id,
+            )
+            return None
+        return self.control.screens[screen_id].name
 
     @property
     def extra_state_attributes(self) -> Mapping[str, Any] | None:
         """Return extra attributes about current screen."""
+        screen_id = int(
+            self.coordinator.data[self.control.ana_current_screen_id]["value"]
+        )
+        if len(self.control.screens) < screen_id + 1:
+            return None
         return {
             "type": self.control.screens[
                 self.coordinator.data[self.control.ana_current_screen_id]["value"]
