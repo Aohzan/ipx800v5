@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0
+
+- Remove service for create push automaticaly
+- Fix error when a screen was added on the X-Display since the last HA starts
+- Fix deprecation warning on climate entities for turn_on/off implementation
+
 ## 1.6.4
 
 - Replace deprecated TEMP_CELCIUS constant by Enum
