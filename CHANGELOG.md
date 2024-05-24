@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.1
+
+- Bump pypx800v5 to fix security issue
+
 ## 1.7.0
 
 - Remove service for create push automaticaly
