@@ -22,7 +22,10 @@ from pypx800v5 import (
     Thermostat,
 )
 
-from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_TYPE
 from homeassistant.core import HomeAssistant
@@ -80,11 +83,23 @@ async def async_setup_entry(
             )
         elif device[CONF_EXT_TYPE] == OBJECT_ACCESS_CONTROL:
             entities.append(
-                AccessControlBinarySensor(device, controller, coordinator, "io_out_id")
+                AccessControlBinarySensor(
+                    device_config=device,
+                    coordinator=coordinator,
+                    ipx=controller,
+                    id_name="io_out_id",
+                    suffix_name="Success",
+                    device_class=BinarySensorDeviceClass.LOCK,
+                )
             )
             entities.append(
                 AccessControlBinarySensor(
-                    device, controller, coordinator, "io_fault_id"
+                    device_config=device,
+                    coordinator=coordinator,
+                    ipx=controller,
+                    id_name="io_fault_id",
+                    suffix_name="Fail",
+                    device_class=BinarySensorDeviceClass.SAFETY,
                 )
             )
 
@@ -97,7 +112,7 @@ class IOBinarySensor(IpxEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         """Return the current value."""
-        return self.coordinator.data[str(self._io_id)]["on"] is True
+        return self.coordinator.data[self._io_id]["on"] is True  # type: ignore[index]
 
 
 class IpxDigitalInputBinarySensor(IpxEntity, BinarySensorEntity):
@@ -221,10 +236,13 @@ class AccessControlBinarySensor(IpxEntity, BinarySensorEntity):
         ipx: IPX800,
         coordinator: DataUpdateCoordinator,
         id_name: str,
+        suffix_name: str,
+        device_class: BinarySensorDeviceClass,
     ) -> None:
         """Initialize the sensor of the tempo."""
-        super().__init__(device_config, ipx, coordinator)
+        super().__init__(device_config, ipx, coordinator, suffix_name)
         self.control = AccessControl(ipx, self._ext_number)
+        self._attr_device_class = device_class
         self._id_name = id_name
 
     @property

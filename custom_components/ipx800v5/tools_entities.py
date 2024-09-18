@@ -27,7 +27,6 @@ from pypx800v5 import (
 )
 
 from homeassistant.const import (
-    CONF_DEVICE_CLASS,
     CONF_ENTITY_CATEGORY,
     CONF_ID,
     CONF_NAME,
@@ -565,28 +564,18 @@ def build_objects_entities(
                         }
                     )
                 elif obj_type == OBJECT_ACCESS_CONTROL:
-                    main_entity = get_device_in_devices_config(
-                        devices_config,
-                        {
-                            CONF_NAME: obj[API_CONFIG_NAME] + " Success",
-                            CONF_COMPONENT: "binary_sensor",
-                            CONF_DEVICE_CLASS: "lock",
-                            CONF_EXT_TYPE: obj_type,
-                            CONF_EXT_NUMBER: obj_number,
-                            CONF_EXT_NAME: obj[API_CONFIG_NAME],
-                        },
-                        True,
-                    )
-                    entities.append(main_entity)
                     entities.append(
-                        {
-                            CONF_NAME: obj[API_CONFIG_NAME] + " Fail",
-                            CONF_COMPONENT: "binary_sensor",
-                            CONF_DEVICE_CLASS: "safety",
-                            CONF_EXT_TYPE: main_entity[CONF_EXT_TYPE],
-                            CONF_EXT_NUMBER: main_entity[CONF_EXT_NUMBER],
-                            CONF_EXT_NAME: main_entity[CONF_EXT_NAME],
-                        }
+                        get_device_in_devices_config(
+                            devices_config,
+                            {
+                                CONF_NAME: obj[API_CONFIG_NAME],
+                                CONF_COMPONENT: "binary_sensor",
+                                CONF_EXT_TYPE: obj_type,
+                                CONF_EXT_NUMBER: obj_number,
+                                CONF_EXT_NAME: obj[API_CONFIG_NAME],
+                            },
+                            True,
+                        )
                     )
                 else:
                     _LOGGER.warning("%s object type not currently supported", obj_type)

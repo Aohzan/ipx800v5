@@ -143,7 +143,7 @@ class AnalogSensor(IpxEntity, SensorEntity):
     @property
     def native_value(self) -> float:
         """Return the current value."""
-        return self.coordinator.data[str(self._io_id)]["value"]
+        return self.coordinator.data[self._io_id]["value"]  # type: ignore[index]
 
 
 class IpxAnalogInputSensor(IpxEntity, SensorEntity):

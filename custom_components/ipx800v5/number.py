@@ -65,7 +65,7 @@ class AnalogNumber(IpxEntity, NumberEntity):
     @property
     def native_value(self) -> float:
         """Return the current value."""
-        return float(self.coordinator.data[str(self._io_id)]["value"])
+        return float(self.coordinator.data[self._io_id]["value"])  # type: ignore[index]
 
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
