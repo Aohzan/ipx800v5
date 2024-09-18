@@ -30,6 +30,7 @@ L'intégration `ipx800v5` vous permet de contrôler et récupérer des informati
   - Thermostat via `climate` et `number` pour les réglages de preset [`thermostat`]
   - Counter via `number` [`counter`]
   - Tempo via `binary_sensor`, `switch` pour l'activer ou non et `number` pour régler la temporisation [`tempo`]
+  - Access Control via `binary_sensor` pour récupérer l'état (push obligatoire) [`access_control`]
 - Entités spécifiques (en yaml uniquement via l'attribut `type`)
   - `io` via `switch` ou `binary_sensor`
   - `ana` via `sensor` ou `number`
@@ -71,10 +72,10 @@ Ajoutez votre configuration `ipx800v5` dans votre fichier `configuration.yaml`.
 | `host`          | string | yes      | -         | IP de votre IPX800                                                                                                     |
 | `port`          | port   | no       | 80        | Port de votre IPX800                                                                                                   |
 | `api_key`       | string | yes      | -         | Clé API configurée (http://IP_IPX800/#/system/apikey)                                                                  |
-| `push_password` | string | no       | -         | Password pour activer les PUSH depuis l'IPX800 [voir ici](#PUSH)                                                       |
+| `push_password` | string | no       | -         | Password pour activer les PUSH depuis l'IPX800 [voir ici](#push)                                                       |
 | `devices_auto`  | list   | no       | -         | Ajout d'appareils automatiquement pour les extensions ou objets spécifiés [voir code entre crochets](#Fonctionnalités) |
 | `diag_sensors`  | bool   | no       | False     | Ajout des sensors de diagnostiques |
-| `devices`       | list   | no       | -         | Liste d'appareils à ajouter manuellement [configuration](#Devices)                                                     |
+| `devices`       | list   | no       | -         | Liste d'appareils à ajouter manuellement [configuration](#devices)                                                     |
 
 ##### Devices
 
@@ -106,6 +107,7 @@ ipx800v5:
       - tempo
       - thermostat
       - xdisplay
+      - access_control
     devices:
       ## ipx
       - name: VMC
