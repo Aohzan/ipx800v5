@@ -1,11 +1,14 @@
 """Support for IPX800 V5 sensors."""
+
 import logging
 
+import pypx800v5
 from pypx800v5 import (
     EXT_XDISPLAY,
     EXT_XTHL,
     IPX,
     IPX800,
+    OBJECT_ACCESS_CONTROL,
     TYPE_ANA,
     XTHL,
     IPX800AnalogInput,
@@ -28,6 +31,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import CONF_DEVICES, CONF_EXT_TYPE, CONTROLLER, COORDINATOR, DOMAIN
@@ -93,7 +97,44 @@ async def async_setup_entry(
         elif device[CONF_EXT_TYPE] == EXT_XDISPLAY:
             entities.append(XDisplayAutoOffSensor(device, controller, coordinator))
             entities.append(XDisplaySensitiveSensor(device, controller, coordinator))
+        elif device[CONF_EXT_TYPE] == OBJECT_ACCESS_CONTROL:
+            entities.append(
+                GenericAnalogSensor(
+                    device,
+                    controller,
+                    coordinator,
+                    pypx_object_name="AccessControl",
+                    pypx_property_name="last_code",
+                )
+            )
     async_add_entities(entities, True)
+
+
+class GenericAnalogSensor(IpxEntity, SensorEntity):
+    """Representation of a generic analog sensor."""
+
+    def __init__(
+        self,
+        device_config: dict,
+        ipx: IPX800,
+        coordinator: DataUpdateCoordinator,
+        pypx_object_name: str,
+        pypx_property_name: str,
+        device_class: SensorDeviceClass | None = None,
+    ) -> None:
+        """Initialize the analog sensor."""
+        super().__init__(device_config, ipx, coordinator)
+        pypx_object = getattr(pypx800v5, pypx_object_name)
+        self.control = pypx_object(ipx, self._ext_number)
+        self._pypx_property_name = pypx_property_name
+        self._attr_device_class = device_class
+
+    @property
+    def native_value(self) -> StateType:
+        """Return the current value."""
+        return self.coordinator.data[getattr(self.control, self._pypx_property_name)][
+            "value"
+        ]
 
 
 class AnalogSensor(IpxEntity, SensorEntity):
@@ -102,7 +143,7 @@ class AnalogSensor(IpxEntity, SensorEntity):
     @property
     def native_value(self) -> float:
         """Return the current value."""
-        return self.coordinator.data[self._io_id]["value"]
+        return self.coordinator.data[str(self._io_id)]["value"]
 
 
 class IpxAnalogInputSensor(IpxEntity, SensorEntity):

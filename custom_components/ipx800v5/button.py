@@ -1,4 +1,5 @@
 """Support for IPX800 V5 button."""
+
 import logging
 
 from pypx800v5 import IPX
@@ -28,7 +29,7 @@ async def async_setup_entry(
 
     for device in devices:
         if device[CONF_EXT_TYPE] == IPX:
-            entities.append(RebootButton(device, controller, coordinator))
+            entities.append(RebootButton(device, controller, coordinator))  # noqa: PERF401
 
     async_add_entities(entities, True)
 

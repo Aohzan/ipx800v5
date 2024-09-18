@@ -1,4 +1,5 @@
 """Support for IPX800 V5 binary sensors."""
+
 import logging
 
 from pypx800v5 import (
@@ -7,12 +8,14 @@ from pypx800v5 import (
     EXT_X24D,
     IPX,
     IPX800,
+    OBJECT_ACCESS_CONTROL,
     OBJECT_TEMPO,
     OBJECT_THERMOSTAT,
     TYPE_IO,
     X8D,
     X8R,
     X24D,
+    AccessControl,
     IPX800DigitalInput,
     IPX800OptoInput,
     Tempo,
@@ -75,6 +78,15 @@ async def async_setup_entry(
             entities.append(
                 ThermostatFaultStateBinarySensor(device, controller, coordinator)
             )
+        elif device[CONF_EXT_TYPE] == OBJECT_ACCESS_CONTROL:
+            entities.append(
+                AccessControlBinarySensor(device, controller, coordinator, "io_out_id")
+            )
+            entities.append(
+                AccessControlBinarySensor(
+                    device, controller, coordinator, "io_fault_id"
+                )
+            )
 
     async_add_entities(entities, True)
 
@@ -85,7 +97,7 @@ class IOBinarySensor(IpxEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         """Return the current value."""
-        return self.coordinator.data[self._io_id]["on"] is True
+        return self.coordinator.data[str(self._io_id)]["on"] is True
 
 
 class IpxDigitalInputBinarySensor(IpxEntity, BinarySensorEntity):
@@ -198,3 +210,24 @@ class ThermostatFaultStateBinarySensor(IpxEntity, BinarySensorEntity):
     def is_on(self) -> bool:
         """Return the current value."""
         return self.coordinator.data[self.control.io_fault_id]["on"] is True
+
+
+class AccessControlBinarySensor(IpxEntity, BinarySensorEntity):
+    """Representation the Access Control state as a binary sensor."""
+
+    def __init__(
+        self,
+        device_config: dict,
+        ipx: IPX800,
+        coordinator: DataUpdateCoordinator,
+        id_name: str,
+    ) -> None:
+        """Initialize the sensor of the tempo."""
+        super().__init__(device_config, ipx, coordinator)
+        self.control = AccessControl(ipx, self._ext_number)
+        self._id_name = id_name
+
+    @property
+    def is_on(self) -> bool:
+        """Return the current value."""
+        return self.coordinator.data[getattr(self.control, self._id_name)]["on"] is True

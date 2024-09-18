@@ -1,4 +1,5 @@
 """Support for IPX800 V5 switches."""
+
 import logging
 from typing import Any
 
@@ -73,7 +74,7 @@ class IOSwitch(IpxEntity, SwitchEntity):
     @property
     def is_on(self) -> bool:
         """Return the current value."""
-        return self.coordinator.data[self._io_id]["on"] is True
+        return self.coordinator.data[str(self._io_id)]["on"] is True
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the switch."""

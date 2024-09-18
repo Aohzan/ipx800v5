@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.8.0
+
+- bump pypx800v5
+- Add Access Control support
+- Fix deprecated code
+
 ## 1.7.1
 
 - Bump pypx800v5 to fix security issue

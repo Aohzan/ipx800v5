@@ -1,4 +1,5 @@
 """Represent the IPX800V5 base entity."""
+
 from pypx800v5 import EXTENSIONS, IPX, IPX800
 from voluptuous.util import Upper
 
@@ -48,12 +49,12 @@ class IpxEntity(CoordinatorEntity):
         self._transition = int(
             device_config.get(CONF_TRANSITION, DEFAULT_TRANSITION) * 1000
         )
-        self._component = device_config[CONF_COMPONENT]
-        self._ext_type = device_config[CONF_EXT_TYPE]
-        self._ext_number = device_config.get(CONF_EXT_NUMBER)
-        self._io_number = device_config.get(CONF_IO_NUMBER)
-        self._io_numbers = device_config.get(CONF_IO_NUMBERS, [])
-        self._io_id = device_config.get(CONF_ID)
+        self._component: str = device_config[CONF_COMPONENT]
+        self._ext_type: str = device_config[CONF_EXT_TYPE]
+        self._ext_number: int | None = device_config.get(CONF_EXT_NUMBER)
+        self._io_number: int | None = device_config.get(CONF_IO_NUMBER)
+        self._io_numbers: list[int] = device_config.get(CONF_IO_NUMBERS, [])
+        self._io_id: int | None = device_config.get(CONF_ID)
 
         self._attr_name: str = device_config[CONF_NAME]
         if suffix_name:

@@ -1,4 +1,5 @@
 """Support for IPX800 V5 covers."""
+
 import logging
 from typing import Any
 
@@ -35,7 +36,7 @@ async def async_setup_entry(
 
     for device in devices:
         if device[CONF_EXT_TYPE] == EXT_X4VR:
-            entities.append(X4VRCover(device, controller, coordinator))
+            entities.append(X4VRCover(device, controller, coordinator))  # noqa: PERF401
 
     async_add_entities(entities, True)
 
@@ -60,7 +61,7 @@ class X4VRCover(IpxEntity, CoverEntity):
             | CoverEntityFeature.SET_POSITION
         )
         if self.control.mode in [2, 3]:
-            self._attr_supported_features += (
+            self._attr_supported_features |= (
                 CoverEntityFeature.CLOSE_TILT | CoverEntityFeature.OPEN_TILT
             )
 

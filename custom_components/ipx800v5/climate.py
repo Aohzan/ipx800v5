@@ -1,4 +1,5 @@
 """Support for IPX800 V5 climates."""
+
 import logging
 from typing import Any
 

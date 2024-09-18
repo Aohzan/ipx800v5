@@ -1,4 +1,5 @@
 """Constants for the ipx800v5 integration."""
+
 DOMAIN = "ipx800v5"
 
 CONTROLLER = "controller"
@@ -31,13 +32,13 @@ TYPE_XPWM_RGB = "xpwm_rgb"
 TYPE_XPWM_RGBW = "xpwm_rgbw"
 
 PLATFORMS = [
-    "light",
-    "switch",
-    "sensor",
     "binary_sensor",
-    "cover",
-    "climate",
-    "number",
     "button",
+    "climate",
+    "cover",
+    "light",
+    "number",
     "select",
+    "sensor",
+    "switch",
 ]

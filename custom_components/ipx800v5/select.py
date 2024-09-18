@@ -1,4 +1,5 @@
 """Support for IPX800 V5 select."""
+
 from collections.abc import Mapping
 import logging
 from typing import Any
@@ -63,7 +64,7 @@ class XDisplayScreenSelect(IpxEntity, SelectEntity):
         )
         if len(self.control.screens) < screen_id + 1:
             _LOGGER.warning(
-                "X-Display current screen #%s is not recognize, please reload the integration to refresh screens",
+                "X-Display current screen #%s is not recognized, please reload the integration to refresh screens, or update if it's persist",
                 screen_id,
             )
             return None

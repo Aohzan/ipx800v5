@@ -1,4 +1,5 @@
 """IPX800V5 request views to handle push information."""
+
 from base64 import b64decode
 from http import HTTPStatus
 import logging
@@ -13,24 +14,29 @@ from .const import PUSH_USERNAME
 _LOGGER = logging.getLogger(__name__)
 
 
+def api_call_not_authorized(msg: str):
+    """Raise an API call not authorized."""
+    raise ApiCallNotAuthorized(msg)
+
+
 def check_api_auth(request, host, push_password) -> bool:
     """Check authentication on API call."""
     try:
         if request.remote != host:
-            raise ApiCallNotAuthorized("API call not coming from IPX800 IP.")
+            api_call_not_authorized("API call not coming from IPX800 IP.")
         if "Authorization" not in request.headers:
-            raise ApiCallNotAuthorized("API call no authentication provided.")
+            api_call_not_authorized("API call no authentication provided.")
         header_auth = request.headers["Authorization"]
         split = header_auth.strip().split(" ")
         if len(split) != 2 or split[0].strip().lower() != "basic":
-            raise ApiCallNotAuthorized("Malformed Authorization header")
+            api_call_not_authorized("Malformed Authorization header")
         username, password = b64decode(split[1]).decode().split(":", 1)
         if username != PUSH_USERNAME or password != push_password:
-            raise ApiCallNotAuthorized("API call authentication invalid.")
-        return True
+            api_call_not_authorized("API call authentication invalid.")
     except ApiCallNotAuthorized as err:
         _LOGGER.warning(err)
         return False
+    return True
 
 
 class IpxRequestView(HomeAssistantView):
@@ -58,6 +64,7 @@ class IpxRequestView(HomeAssistantView):
                 return web.Response(status=HTTPStatus.OK, text="OK")
             _LOGGER.warning("Entity not found for state updating: %s", entity_id)
         _LOGGER.warning("Authentication for PUSH invalid")
+        return None
 
 
 class IpxRequestDataView(HomeAssistantView):
@@ -96,6 +103,7 @@ class IpxRequestDataView(HomeAssistantView):
 
             return web.Response(status=HTTPStatus.OK, text="OK")
         _LOGGER.warning("Authentication for PUSH invalid")
+        return None
 
 
 class IpxRequestRefreshView(HomeAssistantView):
@@ -121,6 +129,7 @@ class IpxRequestRefreshView(HomeAssistantView):
             await self.coordinator.async_request_refresh()
             return web.Response(status=HTTPStatus.OK, text="OK")
         _LOGGER.warning("Authentication for PUSH invalid")
+        return None
 
 
 class ApiCallNotAuthorized(BaseException):

@@ -1,4 +1,5 @@
 """Support for the GCE IPX800 V5."""
+
 from datetime import timedelta
 import logging
 
@@ -209,12 +210,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     for platform in PLATFORMS:
         _LOGGER.debug("Load platform %s", platform)
-        hass.data[DOMAIN][entry.entry_id][CONF_DEVICES][
-            platform
-        ] = filter_entities_by_platform(entities, platform)
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(entry, platform)
+        hass.data[DOMAIN][entry.entry_id][CONF_DEVICES][platform] = (
+            filter_entities_by_platform(entities, platform)
         )
+    hass.async_create_task(
+        hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    )
 
     # Provide endpoints for the IPX to call to push states
     if CONF_PUSH_PASSWORD in config:

@@ -1,4 +1,5 @@
 """Support for IPX800 V5 lights."""
+
 from asyncio import gather as async_gather
 import logging
 from typing import Any

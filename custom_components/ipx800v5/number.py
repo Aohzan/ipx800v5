@@ -1,4 +1,5 @@
 """Support for IPX800 V5 numbers."""
+
 import logging
 
 from pypx800v5 import (
@@ -64,7 +65,7 @@ class AnalogNumber(IpxEntity, NumberEntity):
     @property
     def native_value(self) -> float:
         """Return the current value."""
-        return float(self.coordinator.data[self._io_id]["value"])
+        return float(self.coordinator.data[str(self._io_id)]["value"])
 
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
@@ -121,13 +122,13 @@ class ThermostatParamNumber(IpxEntity, NumberEntity):
         coordinator: DataUpdateCoordinator,
         param: str,
     ) -> None:
-        """Initialize the RelaySwitch."""
+        """Initialize the ThermostatParamNumber."""
         super().__init__(
             device_config, ipx, coordinator, suffix_name=f"{param} Temperature"
         )
         self.control = Thermostat(ipx, self._ext_number)
         self._param = param
-        self._value = self.control._config[f"setPoint{param}"]
+        self._value = self.control.init_config[f"setPoint{param}"]
 
     @property
     def native_value(self) -> float:

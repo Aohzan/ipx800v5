@@ -1,4 +1,5 @@
 """Tools to manage IPX800V5 tools."""
+
 from itertools import groupby
 import logging
 
@@ -17,6 +18,7 @@ from pypx800v5 import (
     EXT_XTHL,
     IPX,
     IPX800,
+    OBJECT_ACCESS_CONTROL,
     OBJECT_COUNTER,
     OBJECT_TEMPO,
     OBJECT_THERMOSTAT,
@@ -25,6 +27,7 @@ from pypx800v5 import (
 )
 
 from homeassistant.const import (
+    CONF_DEVICE_CLASS,
     CONF_ENTITY_CATEGORY,
     CONF_ID,
     CONF_NAME,
@@ -135,7 +138,13 @@ def get_device_in_devices_config(
         # if filter return only one result and don't need io_number(s)
         if (
             device_config[CONF_EXT_TYPE]
-            in [OBJECT_TEMPO, OBJECT_COUNTER, OBJECT_THERMOSTAT, EXT_XTHL]
+            in [
+                OBJECT_ACCESS_CONTROL,
+                OBJECT_TEMPO,
+                OBJECT_COUNTER,
+                OBJECT_THERMOSTAT,
+                EXT_XTHL,
+            ]
             and len(found_devices) == 1
         ):
             device = device_config
@@ -216,7 +225,7 @@ def build_ipx_entities(
         _LOGGER.debug("Build entities for the IPX800 V5")
         for i in range(8):
             # relais
-            entities.append(
+            entities.append(  # noqa: PERF401
                 get_device_in_devices_config(
                     devices_config,
                     {
@@ -230,7 +239,7 @@ def build_ipx_entities(
             )
         for i in range(4):
             # open collector
-            entities.append(
+            entities.append(  # noqa: PERF401
                 get_device_in_devices_config(
                     devices_config,
                     {
@@ -245,7 +254,7 @@ def build_ipx_entities(
             )
         for i in range(8):
             # digital inputs
-            entities.append(
+            entities.append(  # noqa: PERF401
                 get_device_in_devices_config(
                     devices_config,
                     {
@@ -259,7 +268,7 @@ def build_ipx_entities(
             )
         for i in range(4):
             # analog inputs
-            entities.append(
+            entities.append(  # noqa: PERF401
                 get_device_in_devices_config(
                     devices_config,
                     {
@@ -273,7 +282,7 @@ def build_ipx_entities(
             )
         for i in range(4):
             # opto inputs
-            entities.append(
+            entities.append(  # noqa: PERF401
                 get_device_in_devices_config(
                     devices_config,
                     {
@@ -328,7 +337,7 @@ def build_extensions_entities(
                         )
                 elif ext_type == EXT_XDIMMER:
                     for i in range(4):
-                        entities.append(
+                        entities.append(  # noqa: PERF401
                             get_device_in_devices_config(
                                 devices_config,
                                 {
@@ -343,7 +352,7 @@ def build_extensions_entities(
                         )
                 elif ext_type == EXT_XPWM:
                     for i in range(12):
-                        entities.append(
+                        entities.append(  # noqa: PERF401
                             get_device_in_devices_config(
                                 devices_config,
                                 {
@@ -358,7 +367,7 @@ def build_extensions_entities(
                         )
                 elif ext_type in [EXT_X24D, EXT_X8D]:
                     for i in range(24 if ext_type == EXT_X24D else 8):
-                        entities.append(
+                        entities.append(  # noqa: PERF401
                             get_device_in_devices_config(
                                 devices_config,
                                 {
@@ -373,7 +382,7 @@ def build_extensions_entities(
                         )
                 elif ext_type == EXT_X4FP:
                     for i in range(4):
-                        entities.append(
+                        entities.append(  # noqa: PERF401
                             get_device_in_devices_config(
                                 devices_config,
                                 {
@@ -388,7 +397,7 @@ def build_extensions_entities(
                         )
                 elif ext_type == EXT_X4VR:
                     for i in range(4):
-                        entities.append(
+                        entities.append(  # noqa: PERF401
                             get_device_in_devices_config(
                                 devices_config,
                                 {
@@ -446,7 +455,7 @@ def build_extensions_entities(
                     )
                 elif ext_type == EXT_X010V:
                     for i in range(4):
-                        entities.append(
+                        entities.append(  # noqa: PERF401
                             get_device_in_devices_config(
                                 devices_config,
                                 {
@@ -464,7 +473,7 @@ def build_extensions_entities(
                         "%s extension type not currently supported", ext_type
                     )
 
-                ext_number += 1
+                ext_number += 1  # noqa: SIM113
     return entities
 
 
@@ -555,10 +564,34 @@ def build_objects_entities(
                             CONF_EXT_NAME: main_entity[CONF_EXT_NAME],
                         }
                     )
+                elif obj_type == OBJECT_ACCESS_CONTROL:
+                    main_entity = get_device_in_devices_config(
+                        devices_config,
+                        {
+                            CONF_NAME: obj[API_CONFIG_NAME] + " Success",
+                            CONF_COMPONENT: "binary_sensor",
+                            CONF_DEVICE_CLASS: "lock",
+                            CONF_EXT_TYPE: obj_type,
+                            CONF_EXT_NUMBER: obj_number,
+                            CONF_EXT_NAME: obj[API_CONFIG_NAME],
+                        },
+                        True,
+                    )
+                    entities.append(main_entity)
+                    entities.append(
+                        {
+                            CONF_NAME: obj[API_CONFIG_NAME] + " Fail",
+                            CONF_COMPONENT: "binary_sensor",
+                            CONF_DEVICE_CLASS: "safety",
+                            CONF_EXT_TYPE: main_entity[CONF_EXT_TYPE],
+                            CONF_EXT_NUMBER: main_entity[CONF_EXT_NUMBER],
+                            CONF_EXT_NAME: main_entity[CONF_EXT_NAME],
+                        }
+                    )
                 else:
                     _LOGGER.warning("%s object type not currently supported", obj_type)
 
-                obj_number += 1
+                obj_number += 1  # noqa: SIM113
 
     return entities
 

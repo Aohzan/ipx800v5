@@ -1,4 +1,5 @@
 """Config flow to configure the ipx800v5 integration."""
+
 from itertools import groupby
 import logging
 from typing import Any
@@ -16,7 +17,7 @@ import voluptuous as vol
 from voluptuous.util import Upper
 
 from homeassistant import config_entries
-from homeassistant.config_entries import ConfigEntry, OptionsFlow
+from homeassistant.config_entries import ConfigEntry, ConfigFlowResult, OptionsFlow
 from homeassistant.const import (
     CONF_API_KEY,
     CONF_DEVICES,
@@ -26,7 +27,6 @@ from homeassistant.const import (
     CONF_SCAN_INTERVAL,
 )
 from homeassistant.core import callback
-from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
@@ -65,7 +65,7 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Initialize class variables."""
         self.base_config: dict[str, Any] = {}
 
-    async def async_step_import(self, import_info) -> FlowResult:
+    async def async_step_import(self, import_info) -> ConfigFlowResult:
         """Import an advanced configuration from YAML config."""
         entry = await self.async_set_unique_id(f"{DOMAIN}, {import_info[CONF_HOST]}")
 
@@ -83,7 +83,7 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             title=f"{import_info[CONF_NAME]} (from yaml)", data=import_info
         )
 
-    async def async_step_user(self, user_input=None) -> FlowResult:
+    async def async_step_user(self, user_input=None) -> ConfigFlowResult:
         """Get configuration from the user."""
         errors: dict[str, str] = {}
         if user_input is None:
@@ -107,7 +107,7 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.base_config = user_input
         return await self.async_step_params()
 
-    async def async_step_params(self, user_input=None) -> FlowResult:
+    async def async_step_params(self, user_input=None) -> ConfigFlowResult:
         """Handle the param flow to customize according to device config."""
         if user_input is None:
             session = async_get_clientsession(self.hass, False)
@@ -137,7 +137,7 @@ class IpxOptionsFlowHandler(config_entries.OptionsFlow):
         """Initialize."""
         self.config_entry = config_entry
 
-    async def async_step_init(self, user_input=None) -> FlowResult:
+    async def async_step_init(self, user_input=None) -> ConfigFlowResult:
         """Manage the options."""
         if user_input is None:
             session = async_get_clientsession(self.hass, False)
@@ -269,7 +269,7 @@ async def _build_param_schema(
                                 ): vol.All(str, vol.Lower, vol.In(["switch", "light"])),
                             }
                         )
-                ext_number += 1
+                ext_number += 1  # noqa: SIM113
 
     return schema
 
