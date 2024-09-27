@@ -213,9 +213,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN][entry.entry_id][CONF_DEVICES][platform] = (
             filter_entities_by_platform(entities, platform)
         )
-    hass.async_create_task(
-        hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    )
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     # Provide endpoints for the IPX to call to push states
     if CONF_PUSH_PASSWORD in config:

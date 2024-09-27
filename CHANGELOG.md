@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.8.1
+
+- Fix error when retrying IPX API request
+
 ## 1.8.0
 
 - bump pypx800v5
