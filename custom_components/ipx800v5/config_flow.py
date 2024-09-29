@@ -244,7 +244,7 @@ async def _build_param_schema(
 
         _LOGGER.debug("Build schema according to the extensions found")
         for ext_type, extensions in groupby(ipx.extensions_config, lambda x: x["type"]):
-            _LOGGER.debug("Found %s %s", len(extensions), ext_type)
+            _LOGGER.debug("Found %s", ext_type)
             ext_number = 0
             for extension in extensions:
                 if ext_type == EXT_X8R:
