@@ -40,7 +40,7 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
-from .tools_entities import get_device_in_devices_config
+from .helpers import get_device_in_devices_config
 
 _LOGGER = logging.getLogger(__name__)
 

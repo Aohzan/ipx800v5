@@ -45,7 +45,7 @@ from .const import (
     TYPE_XPWM_RGB,
     TYPE_XPWM_RGBW,
 )
-from .tools_ipx_entity import IpxEntity
+from .entity import IpxEntity
 
 _LOGGER = logging.getLogger(__name__)
 

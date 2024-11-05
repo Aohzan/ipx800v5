@@ -48,8 +48,7 @@ from .const import (
     REQUEST_REFRESH_DELAY,
     UNDO_UPDATE_LISTENER,
 )
-from .request_views import IpxRequestDataView, IpxRequestRefreshView, IpxRequestView
-from .tools_entities import (
+from .helpers import (
     build_extensions_entities,
     build_ipx_entities,
     build_ipx_system_entities,
@@ -57,6 +56,7 @@ from .tools_entities import (
     filter_entities_by_platform,
     remove_duplicate_entities,
 )
+from .request_views import IpxRequestDataView, IpxRequestRefreshView, IpxRequestView
 
 _LOGGER = logging.getLogger(__name__)
 

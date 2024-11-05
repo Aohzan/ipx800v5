@@ -35,7 +35,7 @@ from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import CONF_DEVICES, CONF_EXT_TYPE, CONTROLLER, COORDINATOR, DOMAIN
-from .tools_ipx_entity import IpxEntity
+from .entity import IpxEntity
 
 _LOGGER = logging.getLogger(__name__)
 

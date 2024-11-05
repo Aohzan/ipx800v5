@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.8.3
+
+- bump pypx800v5
+
 ## 1.8.2
 
 - Fix error when debug logs activated introduced in 1.8.1

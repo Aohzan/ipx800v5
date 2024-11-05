@@ -32,7 +32,7 @@ from .const import (
     DOMAIN,
     TYPE_IPX_OPENCOLL,
 )
-from .tools_ipx_entity import IpxEntity
+from .entity import IpxEntity
 
 _LOGGER = logging.getLogger(__name__)
 
