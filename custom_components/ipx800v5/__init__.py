@@ -218,15 +218,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Provide endpoints for the IPX to call to push states
     if CONF_PUSH_PASSWORD in config:
         hass.http.register_view(
-            IpxRequestView(config[CONF_HOST], config[CONF_PUSH_PASSWORD])
+            IpxRequestView(
+                config[CONF_HOST], config[CONF_PUSH_PASSWORD], config[CONF_NAME]
+            )
         )
         hass.http.register_view(
-            IpxRequestDataView(config[CONF_HOST], config[CONF_PUSH_PASSWORD])
+            IpxRequestDataView(
+                config[CONF_HOST], config[CONF_PUSH_PASSWORD], config[CONF_NAME]
+            )
         )
 
         hass.http.register_view(
             IpxRequestRefreshView(
-                config[CONF_HOST], config[CONF_PUSH_PASSWORD], coordinator
+                config[CONF_HOST],
+                config[CONF_PUSH_PASSWORD],
+                config[CONF_NAME],
+                coordinator,
             )
         )
     else:

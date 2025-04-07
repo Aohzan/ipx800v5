@@ -8,6 +8,7 @@ from aiohttp import web
 
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.util import slugify
 
 from .const import PUSH_USERNAME
 
@@ -44,13 +45,15 @@ class IpxRequestView(HomeAssistantView):
     """Provide a page for the device to call."""
 
     requires_auth = False
-    url = "/api/ipx800v5/{entity_id}/{state}"
     name = "api:ipx800v5"
 
-    def __init__(self, host: str, password: str) -> None:
+    def __init__(self, host: str, password: str, ipx_name: str) -> None:
         """Init the IPX view."""
         self.host = host
         self.password = password
+        self.url = "/api/%s/{entity_id}/{state}/" % slugify(ipx_name)
+        self.extra_urls = ["/api/ipx800v5/{entity_id}/{state}"]  # retrocompat
+        _LOGGER.debug("Dedicated push url for '%s': '%s'", ipx_name, self.url)
         super().__init__()
 
     async def get(self, request, entity_id, state):
@@ -72,13 +75,15 @@ class IpxRequestDataView(HomeAssistantView):
     """Provide a page for the device to call for send multiple data at once."""
 
     requires_auth = False
-    url = "/api/ipx800v5_data/{data}"
     name = "api:ipx800v5_data"
 
-    def __init__(self, host: str, password: str) -> None:
+    def __init__(self, host: str, password: str, ipx_name: str) -> None:
         """Init the IPX view."""
         self.host = host
         self.password = password
+        self.url = "/api/%s_data/{data}" % slugify(ipx_name)
+        self.extra_urls = ["/api/ipx800v5_data/{data}"]  # retrocompat
+        _LOGGER.debug("Dedicated push data url for '%s': '%s'", ipx_name, self.url)
         super().__init__()
 
     async def get(self, request, data):
@@ -111,16 +116,25 @@ class IpxRequestRefreshView(HomeAssistantView):
     """Provide a page for the device to call for send multiple data at once."""
 
     requires_auth = False
-    url = "/api/ipx800v5_refresh/{data}"
     name = "api:ipx800v5_refresh"
 
     def __init__(
-        self, host: str, password: str, coordinator: DataUpdateCoordinator
+        self,
+        host: str,
+        password: str,
+        ipx_name: str,
+        coordinator: DataUpdateCoordinator,
     ) -> None:
         """Init the IPX view."""
         self.host = host
         self.password = password
         self.coordinator = coordinator
+        self.url = f"/api/{slugify(ipx_name)}_refresh"
+        self.extra_urls = [
+            "/api/ipx800v5_refresh",  # retrocompat
+            "/api/ipx800v5_refresh/{data}",  # retrocompat
+        ]
+        _LOGGER.debug("Dedicated push refresh url for '%s': '%s'", ipx_name, self.url)
         super().__init__()
 
     async def get(self, request, data):
