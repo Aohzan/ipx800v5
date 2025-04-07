@@ -245,3 +245,7 @@ Ensuite créer une scène pour activer le nouveau PUSH créé avec un ON/OFF sel
 ### Poussez l'état de pusieurs entités
 
 Même chose que précédemment, en séparant par des `&`, exemple : `/api/ipx800v5/votre_entite=on&votre_autre_entite=off`.
+
+### Cas de plusieurs IPX800
+
+Si vous avez plusieurs IPX800, il faut ajouter le nom de l'ipx (celui choisi avec `name`) dans l'url, exemple: `/api/ipx800v5/ipxa/binary_sensor.detecteur_garage/on`.
