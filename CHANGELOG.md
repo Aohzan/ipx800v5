@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.9.1](https://github.com/Aohzan/ipx800v5/compare/1.9.0...1.9.1) (2025-04-23)
+
+### Bug Fixes
+
+* deprecated optionsflow config ([7d13044](https://github.com/Aohzan/ipx800v5/commit/7d130443543544e0e6c7c42b073eea7bf79657bd))
+
 ## [1.9.0](https://github.com/Aohzan/ipx800v5/compare/1.8.4...1.9.0) (2025-04-23)
 
 ### Features
