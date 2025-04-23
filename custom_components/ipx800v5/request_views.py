@@ -21,6 +21,7 @@ def api_call_not_authorized(msg: str):
 
 def check_api_auth(request, host, push_password) -> bool:
     """Check authentication on API call."""
+    _LOGGER.debug("Check API authentication from %s (expected %s)", request.remote, host)
     try:
         if request.remote != host:
             api_call_not_authorized("API call not coming from IPX800 IP.")
