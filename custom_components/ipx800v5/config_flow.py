@@ -127,15 +127,11 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
         """Define the config flow to handle options."""
-        return IpxOptionsFlowHandler(config_entry)
+        return IpxOptionsFlowHandler()
 
 
-class IpxOptionsFlowHandler(config_entries.OptionsFlow):
+class IpxOptionsFlowHandler(OptionsFlow):
     """Handle a IPX800 options flow."""
-
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Initialize."""
-        self.config_entry = config_entry
 
     async def async_step_init(self, user_input=None) -> ConfigFlowResult:
         """Manage the options."""
