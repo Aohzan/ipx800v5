@@ -1,6 +1,6 @@
 # Changelog
 
-# [1.9.0](https://github.com/Aohzan/ipx800v5/compare/1.8.4...1.9.0) (2025-04-23)
+## [1.9.0](https://github.com/Aohzan/ipx800v5/compare/1.8.4...1.9.0) (2025-04-23)
 
 
 ### Features
