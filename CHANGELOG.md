@@ -1,5 +1,12 @@
 # Changelog
 
+# [1.9.0](https://github.com/Aohzan/ipx800v5/compare/1.8.4...1.9.0) (2025-04-23)
+
+
+### Features
+
+* add release ([8a6e40a](https://github.com/Aohzan/ipx800v5/commit/8a6e40a20b0c8e75d09bcf97f987e6976bca3a11))
+
 ## 1.8.4
 
 - bump pypx800v5
