@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.2](https://github.com/Aohzan/ipx800v5/compare/1.9.1...1.9.2) (2025-05-08)
+
+### Bug Fixes
+
+* auth handle on API ([efb7d3a](https://github.com/Aohzan/ipx800v5/commit/efb7d3ae1404f9535ab071f4622a3daaa76caa63))
+* multiple IPX push ([f9bec0d](https://github.com/Aohzan/ipx800v5/commit/f9bec0d4feba5570ea8b63c5251fc74e7f4a6af9))
+
 ## [1.9.1](https://github.com/Aohzan/ipx800v5/compare/1.9.0...1.9.1) (2025-04-23)
 
 ### Bug Fixes
