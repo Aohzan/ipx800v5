@@ -248,4 +248,4 @@ Même chose que précédemment, en séparant par des `&`, exemple : `/api/ipx800
 
 ### Cas de plusieurs IPX800
 
-Si vous avez plusieurs IPX800, il faut ajouter le nom de l'ipx (celui choisi avec `name`) dans l'url, exemple: `/api/ipx800v5/ipxa/binary_sensor.detecteur_garage/on`.
+Si vous avez plusieurs IPX800, il faut ajouter le nom de l'ipx (celui choisi avec `name`) dans l'url, exemple: `/api/ipx800v5a/binary_sensor.detecteur_garage/on`.
