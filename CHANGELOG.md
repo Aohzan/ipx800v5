@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.9.3](https://github.com/Aohzan/ipx800v5/compare/1.9.2...1.9.3) (2025-10-14)
+
+### Bug Fixes
+
+* bump pypx800v5 to fix xdimmer turn off ([9fcbf9b](https://github.com/Aohzan/ipx800v5/commit/9fcbf9b1543e949624a586df7dc8c180cc6ee9be))
+
 ## [1.9.2](https://github.com/Aohzan/ipx800v5/compare/1.9.1...1.9.2) (2025-05-08)
 
 ### Bug Fixes
