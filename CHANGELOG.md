@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.9.4](https://github.com/Aohzan/ipx800v5/compare/1.9.3...1.9.4) (2025-10-17)
+
+### Bug Fixes
+
+* revert 1.9.3 changes ([d1b5551](https://github.com/Aohzan/ipx800v5/commit/d1b5551250e197ce545b4f44c3c39e320315d5a9))
+
 ## [1.9.3](https://github.com/Aohzan/ipx800v5/compare/1.9.2...1.9.3) (2025-10-14)
 
 ### Bug Fixes
