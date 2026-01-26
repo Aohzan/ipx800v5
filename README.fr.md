@@ -125,6 +125,11 @@ ipx800v5:
         ext_type: ipx
         type: io
         id: 65703
+      - name: Mon Virtual ANA
+        component: sensor
+        ext_type: ipx
+        type: ana
+        id: 65704
       - name: Luminosité Cuisine
         ext_type: ipx
         io_number: 1
