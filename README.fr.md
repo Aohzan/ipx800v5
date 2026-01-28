@@ -215,11 +215,7 @@ Vous pouvez configurer des PUSH depuis votre IPX800 pour avoir l'état d'une ent
 
 Premièrement, ajouter le mot de passe push dans votre configuration, dans les options de l'intégration via l'UI ou en yaml
 
-Ensuite, deux solutions:
-
-#### Création manuelle (simple)
-
-Créez un PUSH dans les liens > Objets > Push, avec les éléments suivant
+Ensuite, créer un PUSH dans les liens > Objets > Push, avec les éléments suivant
 
 - `Adresse`: Adresse IP de votre Home-Assisant
 - `Port`: Port de votre Home-Assistant (par défaut `8123`)
@@ -232,19 +228,6 @@ Exemple:
 ![PUSH configuration example](push_config.jpg)
 
 Ensuite créer une scène pour activer votre PUSH avec un ON/OFF selon votre souhait, exemple ici avec un tempo:
-![PUSH scene example](push_scene.jpg)
-
-#### Création automatique (avancé)
-
-Il est possible de créer automatiquement l'objet PUSH dans votre configuration, via un service Home-Assistant appelé `ipx800v5.create_push_object`.
-Vous devez fournir:
-
-- `Auth Token`: afin d'être autorisé à créer un PUSH, il faut récupérer un token d'authentification de niveau 2 ou plus depuis l'IP du Home-Assisant, c'et donc assez compliqué et demande de faire un proxy sur ce dernier, une fois fait, allez sur l'interface web de votre IPX, activez le mode développeur (F12 généralement) et récupérez le `AuthToken` sur les url envoyées à votre IPX (exemple: `XHRGET http://192.168.1.123/api/core/str?AuthToken=a1b2c3d4e5g6 [HTTP/1.1 202 Accepted 14ms]` => le token est `a1b2c3d4e5g6`)
-- `Entity`: l'entité que vous voulez mettre à jour (exemple: `binary_sensor.capteur_garage`)
-- `Home-Assistant IP`: l'IP de votre Home-Assistant (exemple: `192.168.1.234`)
-- `Home-Assistant Port`: le port HTTP de votre Home-Assistant (exemple par défaut: `8123`)
-
-Ensuite créer une scène pour activer le nouveau PUSH créé avec un ON/OFF selon votre souhait, exemple ici avec un tempo:
 ![PUSH scene example](push_scene.jpg)
 
 ### Poussez l'état de pusieurs entités
