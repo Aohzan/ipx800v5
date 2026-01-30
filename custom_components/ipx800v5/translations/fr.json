@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "description": "Pour une configuration avancée en yaml, voir la documentation : https://github.com/Aohzan/ipx800v5.",
+        "description": "Pour une configuration avancée en yaml, voir la documentation.",
         "data": {
           "name": "Nom de l'IPX800 V5",
           "host": "IP",
