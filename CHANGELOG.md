@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.9.5](https://github.com/Aohzan/ipx800v5/compare/1.9.4...1.9.5) (2026-01-30)
+
+### Bug Fixes
+
+* remove URL from translations files ([8b95b12](https://github.com/Aohzan/ipx800v5/commit/8b95b120724b4c07bf1f2a8e030d4d6ce54f733f))
+
 ## [1.9.4](https://github.com/Aohzan/ipx800v5/compare/1.9.3...1.9.4) (2025-10-17)
 
 ### Bug Fixes
