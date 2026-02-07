@@ -32,7 +32,18 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import CONF_DEVICES, CONF_EXT_TYPE, CONTROLLER, COORDINATOR, DOMAIN
+from .const import (
+    CONF_DEVICES,
+    CONF_EXT_TYPE,
+    CONF_MAX_TEMP,
+    CONF_TARGET_TEMP_STEP,
+    CONTROLLER,
+    COORDINATOR,
+    DEFAULT_MAX_TEMP,
+    DEFAULT_MIN_TEMP,
+    DEFAULT_TARGET_TEMP_STEP,
+    DOMAIN,
+)
 from .entity import IpxEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -267,7 +278,6 @@ class RelayClimate(IpxEntity, ClimateEntity):
 class ThermostatClimate(IpxEntity, ClimateEntity):
     """Representation of a IPX Thermostat."""
 
-    _attr_target_temperature_step = 0.1
     _attr_supported_features = (
         ClimateEntityFeature.PRESET_MODE
         | ClimateEntityFeature.TARGET_TEMPERATURE
@@ -288,6 +298,68 @@ class ThermostatClimate(IpxEntity, ClimateEntity):
         """Initialize the IPX800 thermostat."""
         super().__init__(device_config, ipx, coordinator)
         self.control = Thermostat(ipx, self._ext_number)
+        
+        # min_temp is NEVER configurable - always read from IPX800 NoFrost for safety
+        # max_temp and target_temp_step can be configured in YAML or use defaults
+        self._config_max_temp = device_config.get(CONF_MAX_TEMP)
+        self._config_target_temp_step = device_config.get(CONF_TARGET_TEMP_STEP)
+        
+        _LOGGER.info(
+            "Thermostat %s initialized - min_temp=NoFrost (dynamic), max_temp=%s, step=%s",
+            self._attr_name,
+            self._config_max_temp or DEFAULT_MAX_TEMP,
+            self._config_target_temp_step or DEFAULT_TARGET_TEMP_STEP,
+        )
+
+    def _get_nofrost_temp(self) -> float | None:
+        """Get NoFrost temperature from IPX800 config."""
+        try:
+            ipx_config = self.control.init_config
+            if ipx_config and "setPointNoFrost" in ipx_config:
+                nofrost = float(ipx_config["setPointNoFrost"])
+                _LOGGER.debug(
+                    "Thermostat %s - Read NoFrost from IPX800: %s°C",
+                    self._attr_name,
+                    nofrost,
+                )
+                return nofrost
+        except (AttributeError, KeyError, ValueError, TypeError) as err:
+            _LOGGER.debug(
+                "Could not read NoFrost from IPX800 for %s: %s",
+                self._attr_name,
+                err,
+            )
+        return None
+
+    @property
+    def min_temp(self) -> float:
+        """Return the minimum temperature - ALWAYS read from IPX800 NoFrost (safety)."""
+        # min_temp is NEVER configurable in YAML - always synchronized with IPX800 NoFrost
+        # This ensures safety: the minimum temperature in HA matches the anti-freeze setting
+        nofrost = self._get_nofrost_temp()
+        if nofrost is not None:
+            return nofrost
+        # Fallback to safe default if NoFrost cannot be read
+        _LOGGER.warning(
+            "Could not read NoFrost from IPX800 for %s, using default min_temp=%s",
+            self._attr_name,
+            DEFAULT_MIN_TEMP,
+        )
+        return DEFAULT_MIN_TEMP
+
+    @property
+    def max_temp(self) -> float:
+        """Return the maximum temperature - configurable in YAML or default."""
+        # max_temp has no equivalent in IPX800
+        # User can configure it in YAML or we use a reasonable default (22°C)
+        return self._config_max_temp or DEFAULT_MAX_TEMP
+
+    @property
+    def target_temperature_step(self) -> float:
+        """Return the target temperature step - configurable in YAML or default."""
+        # target_temp_step has no equivalent in IPX800
+        # User can configure it in YAML or we use 0.5°C (more practical than 0.1°C)
+        return self._config_target_temp_step or DEFAULT_TARGET_TEMP_STEP
 
     @property
     def current_temperature(self) -> float:

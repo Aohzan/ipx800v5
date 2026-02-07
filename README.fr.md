@@ -92,6 +92,10 @@ Ajoutez votre configuration `ipx800v5` dans votre fichier `configuration.yaml`.
 | `device_class` | string     | no       | -       | Device class                                                                         |
 | `transition`   | int        | no       | -       | Délais de changement d'état                                                          |
 | `type`         | string     | no       | -       | Type d'entité spécifique  [voir les possibilités](#Fonctionnalités)                  |
+| `max_temp`     | float      | no       | 22      | Température maximale (pour thermostat uniquement)                                     |
+| `target_temp_step` | float  | no       | 0.5     | Pas de réglage de la température (pour thermostat uniquement)                        |
+
+**Note pour les thermostats** : `min_temp` n'est **pas configurable** car il est toujours synchronisé avec la valeur **NoFrost** (hors gel) configurée dans l'IPX800 pour des raisons de sécurité. Seuls `max_temp` et `target_temp_step` peuvent être personnalisés.
 
 #### Exemple
 
@@ -190,6 +194,16 @@ ipx800v5:
         component: climate
         ext_type: thermostat
         ext_number: 0
+        # min_temp est lu automatiquement depuis NoFrost (IPX800)
+        # max_temp et target_temp_step utilisent les valeurs par défaut (22°C, 0.5°C)
+      ## objet thermostat avec paramètres personnalisés
+      - name: Thermostat Salle de bain
+        component: climate
+        ext_type: thermostat
+        ext_number: 1          # 0 premier thermostat, 1 second thermostat, etc.
+        max_temp: 25           # Personnalise le maximum
+        target_temp_step: 1    # Pas de 1°C
+        # min_temp sera toujours = NoFrost (non configurable, sécurité)
       ## objet tempo
       - name: Présence Garage
         ext_type: tempo

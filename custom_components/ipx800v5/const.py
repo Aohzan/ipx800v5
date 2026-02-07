@@ -25,6 +25,18 @@ CONF_EXT_NAME = "ext_name"
 CONF_EXT_NUMBER = "ext_number"
 CONF_IO_NUMBER = "io_number"
 CONF_IO_NUMBERS = "io_numbers"
+# min_temp is NOT configurable - always read from IPX800 NoFrost value for safety
+CONF_MAX_TEMP = "max_temp"
+CONF_TARGET_TEMP_STEP = "target_temp_step"
+
+# Default temperature settings
+# min_temp is ALWAYS read from IPX800 NoFrost value (safety)
+# If NoFrost not available, use 7°C as absolute safety minimum
+DEFAULT_MIN_TEMP = 7
+# max_temp has no equivalent in IPX800, use reasonable default
+DEFAULT_MAX_TEMP = 22
+# target_temp_step has no equivalent in IPX800, 0.5°C is more practical than 0.1°C
+DEFAULT_TARGET_TEMP_STEP = 0.5
 
 TYPE_IPX_OPENCOLL = "opencoll"
 TYPE_IPX_OPTO = "opto"
