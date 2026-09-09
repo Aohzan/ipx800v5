@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.1.1](https://github.com/Aohzan/ipx800v5/compare/2.1.0...2.1.1) (2026-09-09)
+
+### Bug Fixes
+
+* device registry depreciation ([eea7391](https://github.com/Aohzan/ipx800v5/commit/eea7391cd333fb78a17ba7f43785eecf1a38f3e9))
+
 ## [2.1.0](https://github.com/Aohzan/ipx800v5/compare/2.0.1...2.1.0) (2026-05-12)
 
 ### Features
