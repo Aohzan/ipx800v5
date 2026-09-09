@@ -22,6 +22,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.debounce import Debouncer
+from homeassistant.helpers.device_registry import (
+    CONNECTION_NETWORK_MAC,
+    async_get as async_get_device_registry,
+)
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from pypx800v5 import IPX800, IPX800CannotConnectError, IPX800InvalidAuthError
@@ -172,6 +176,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     undo_listener = entry.add_update_listener(_async_update_listener)
 
     await coordinator.async_refresh()
+
+    device_registry = async_get_device_registry(hass)
+    device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        connections={(CONNECTION_NETWORK_MAC, str(ipx.mac_address))},
+        identifiers={(DOMAIN, ipx.mac_address)},
+        manufacturer="GCE Electronics",
+        model="IPX800 V5",
+        name=config[CONF_NAME],
+        sw_version=ipx.firmware_version,
+        configuration_url=f"http://{config[CONF_HOST]}:{config[CONF_PORT]}/",
+    )
 
     hass.data[DOMAIN][entry.entry_id] = {
         CONF_NAME: config[CONF_NAME],
