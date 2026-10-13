@@ -90,7 +90,7 @@ async def async_setup_entry(
         elif device[CONF_EXT_TYPE] == EXT_X010V:
             entities.append(X010VLight(device, controller, coordinator))
 
-    async_add_entities(entities, True)
+    async_add_entities(entities)
 
 
 class IpxLight(IpxEntity, LightEntity):

@@ -106,7 +106,7 @@ async def async_setup_entry(
                     pypx_property_name="str_last_code_id",
                 )
             )
-    async_add_entities(entities, True)
+    async_add_entities(entities)
 
 
 class GenericAnalogSensor(IpxEntity, SensorEntity):

@@ -55,7 +55,7 @@ async def async_setup_entry(
         elif device[CONF_EXT_TYPE] == OBJECT_TEMPO:
             entities.append(TempoDelayNumber(device, controller, coordinator))
 
-    async_add_entities(entities, True)
+    async_add_entities(entities)
 
 
 class AnalogNumber(IpxEntity, NumberEntity):
