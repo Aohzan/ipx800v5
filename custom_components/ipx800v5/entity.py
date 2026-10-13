@@ -8,7 +8,11 @@ from homeassistant.const import (
     CONF_NAME,
     CONF_UNIT_OF_MEASUREMENT,
 )
-from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, DeviceInfo
+from homeassistant.helpers.device_registry import (
+    CONNECTION_NETWORK_MAC,
+    DeviceInfo,
+    async_get_device_id_by_identifier,
+)
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -104,8 +108,6 @@ class IpxEntity(CoordinatorEntity):
             device_name = device_name or device_config.get(
                 CONF_EXT_NAME, f"{Upper(self._ext_type)} N°{self._ext_number}"
             )
-            # The parent IPX device is registered in async_setup_entry before
-            # the platforms are set up, so via_device always resolves.
             self._attr_device_info = DeviceInfo(
                 identifiers={
                     (DOMAIN, f"{self.ipx.mac_address}_{slugify(device_name)}")
@@ -114,5 +116,11 @@ class IpxEntity(CoordinatorEntity):
                 model=device_model,
                 name=device_name,
                 configuration_url=configuration_url,
-                via_device=(DOMAIN, self.ipx.mac_address),
+                # The parent IPX device is registered in async_setup_entry
+                # before the platforms are set up, so it always resolves.
+                via_device_id=async_get_device_id_by_identifier(
+                    coordinator.hass,
+                    (DOMAIN, self.ipx.mac_address),
+                    config_entry_id=coordinator.config_entry.entry_id,
+                ),
             )

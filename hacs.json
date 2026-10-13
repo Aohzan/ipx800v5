@@ -1,5 +1,6 @@
 {
   "name": "GCE IPX800 V5",
   "country": "FR",
+  "homeassistant": "2026.8.0",
   "render_readme": true
 }
