@@ -387,15 +387,15 @@ class XPWMRGBLight(IpxEntity, LightEntity):
         else:
             await async_gather(
                 self.xpwm_rgb_r.set_level(
-                    scaleto100(self._default_brightness),
+                    self._default_brightness,
                     self._transition * 1000,
                 ),
                 self.xpwm_rgb_g.set_level(
-                    scaleto100(self._default_brightness),
+                    self._default_brightness,
                     self._transition * 1000,
                 ),
                 self.xpwm_rgb_b.set_level(
-                    scaleto100(self._default_brightness),
+                    self._default_brightness,
                     self._transition * 1000,
                 ),
             )
