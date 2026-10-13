@@ -57,6 +57,7 @@ from .helpers import (
     build_ipx_system_entities,
     build_objects_entities,
     filter_entities_by_platform,
+    get_entry_config,
     remove_duplicate_entities,
 )
 from .request_views import IpxRequestDataView, IpxRequestRefreshView, IpxRequestView
@@ -118,7 +119,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up the IPX800v5."""
     hass.data.setdefault(DOMAIN, {})
 
-    config = entry.options | entry.data
+    config = get_entry_config(entry)
 
     session = async_get_clientsession(hass, False)
 
