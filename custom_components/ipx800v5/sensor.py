@@ -103,7 +103,7 @@ async def async_setup_entry(
                     controller,
                     coordinator,
                     pypx_object_name="AccessControl",
-                    pypx_property_name="last_code",
+                    pypx_property_name="str_last_code_id",
                 )
             )
     async_add_entities(entities, True)
