@@ -7,7 +7,12 @@ from typing import Any
 import voluptuous as vol
 from aiohttp import ClientSession
 from homeassistant import config_entries
-from homeassistant.config_entries import ConfigEntry, ConfigFlowResult, OptionsFlow
+from homeassistant.config_entries import (
+    SOURCE_USER,
+    ConfigEntry,
+    ConfigFlowResult,
+    OptionsFlow,
+)
 from homeassistant.const import (
     CONF_API_KEY,
     CONF_DEVICES,
@@ -39,7 +44,7 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
-from .helpers import get_device_in_devices_config
+from .helpers import get_device_in_devices_config, get_entry_config
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -113,13 +118,13 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_show_form(
                 step_id="params",
                 data_schema=vol.Schema(
-                    await _build_param_schema(session, self.base_config, {}, "user")
+                    await _build_param_schema(session, self.base_config, SOURCE_USER)
                 ),
             )
 
         return self.async_create_entry(
             title=self.base_config[CONF_HOST],
-            data=config_organizer(self.base_config, user_input),
+            data=self.base_config | config_organizer(user_input, SOURCE_USER),
         )
 
     @staticmethod
@@ -136,11 +141,9 @@ class IpxOptionsFlowHandler(OptionsFlow):
         """Manage the options."""
         if user_input is None:
             session = async_get_clientsession(self.hass, False)
-            config = self.config_entry.data
-            options = self.config_entry.options
 
             schema = await _build_param_schema(
-                session, config, options, self.config_entry.source
+                session, get_entry_config(self.config_entry), self.config_entry.source
             )
 
             return self.async_show_form(
@@ -150,7 +153,7 @@ class IpxOptionsFlowHandler(OptionsFlow):
 
         return self.async_create_entry(
             title=self.config_entry.data[CONF_HOST],
-            data=config_organizer(self.config_entry.data, user_input),
+            data=config_organizer(user_input, self.config_entry.source),
         )
 
 
@@ -176,12 +179,10 @@ async def _test_connection(session: ClientSession, base_config: dict) -> dict[st
 
 async def _build_param_schema(
     session,
-    base_config,
-    options,
+    config,
     entry_source,
 ):
     """Build schema for params and options flow according to the IPX800 config."""
-    config = {**base_config, **options}
     # options for ui and yaml entry
     schema = {
         vol.Required(
@@ -191,7 +192,7 @@ async def _build_param_schema(
     }
 
     # if entry created with config_flow, add options
-    if entry_source == "user":
+    if entry_source == SOURCE_USER:
         _LOGGER.debug("Add options for user entry")
         devices_config = config.get(CONF_DEVICES, {})
         schema.update(
@@ -209,9 +210,9 @@ async def _build_param_schema(
 
         _LOGGER.debug("Connect to the IPX to get its configuration")
         ipx = IPX800(
-            host=base_config[CONF_HOST],
-            port=base_config[CONF_PORT],
-            api_key=base_config[CONF_API_KEY],
+            host=config[CONF_HOST],
+            port=config[CONF_PORT],
+            api_key=config[CONF_API_KEY],
             session=session,
         )
         await ipx.init_config()
@@ -269,15 +270,18 @@ async def _build_param_schema(
     return schema
 
 
-def config_organizer(base_config, user_input):
-    """Organize devices config to be a list like yaml schema."""
-    config = dict(base_config)
+def config_organizer(user_input, entry_source):
+    """Organize params input to options, with devices config as a yaml-like list."""
+    config = {}
 
     # For user and yaml entry
     config[CONF_SCAN_INTERVAL] = user_input[CONF_SCAN_INTERVAL]
     user_input.pop(CONF_SCAN_INTERVAL)
 
-    # Only for user entry
+    # Only for user entry, devices of yaml entries come from configuration.yaml
+    if entry_source != SOURCE_USER:
+        return config
+
     if CONF_API_KEY in user_input:
         config[CONF_API_KEY] = user_input[CONF_API_KEY]
         user_input.pop(CONF_API_KEY)

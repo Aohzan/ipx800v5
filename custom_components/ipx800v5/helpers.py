@@ -3,10 +3,13 @@
 import logging
 from itertools import groupby
 
+from homeassistant.config_entries import SOURCE_USER, ConfigEntry
 from homeassistant.const import (
+    CONF_API_KEY,
     CONF_ENTITY_CATEGORY,
     CONF_ID,
     CONF_NAME,
+    CONF_SCAN_INTERVAL,
     CONF_TYPE,
     EntityCategory,
 )
@@ -35,11 +38,13 @@ from pypx800v5 import (
 
 from .const import (
     CONF_COMPONENT,
+    CONF_DEVICES,
     CONF_EXT_NAME,
     CONF_EXT_NUMBER,
     CONF_EXT_TYPE,
     CONF_IO_NUMBER,
     CONF_IO_NUMBERS,
+    CONF_PUSH_PASSWORD,
     DEFAULT_IPX_NAME,
     TYPE_IPX_OPENCOLL,
     TYPE_IPX_OPTO,
@@ -48,6 +53,20 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def get_entry_config(entry: ConfigEntry) -> dict:
+    """Merge the entry data with the options its options flow can change.
+
+    Older versions stored a full copy of the data in the options, so only
+    the keys editable for the entry source are taken from them.
+    """
+    option_keys = [CONF_SCAN_INTERVAL]
+    if entry.source == SOURCE_USER:
+        option_keys.extend([CONF_API_KEY, CONF_PUSH_PASSWORD, CONF_DEVICES])
+    return dict(entry.data) | {
+        key: value for key, value in entry.options.items() if key in option_keys
+    }
 
 
 def filter_entities_by_platform(devices: list, component: str) -> list:
