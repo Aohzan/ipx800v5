@@ -291,14 +291,12 @@ def _async_migrate_extension_devices(
     """Prefix the extension device identifiers with the IPX800 MAC address.
 
     Extension devices were identified by their name only, which merged the
-    devices of extensions having the same name on several IPX800. Devices
-    already shared between entries are left as is: their entities move to
-    new devices for each IPX800.
+    devices of extensions having the same name on several IPX800. Home
+    Assistant 2026.8 split the devices shared between entries, so each entry
+    migrates its own copy.
     """
     device_registry = async_get_device_registry(hass)
     for device in async_entries_for_config_entry(device_registry, entry.entry_id):
-        if device.config_entries != {entry.entry_id}:
-            continue
         identifiers = {
             (domain, identifier)
             if domain != DOMAIN
