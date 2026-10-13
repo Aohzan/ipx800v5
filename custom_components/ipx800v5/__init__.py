@@ -48,6 +48,7 @@ from .const import (
     DEFAULT_TRANSITION,
     DOMAIN,
     PLATFORMS,
+    PUSH_VIEWS,
     REQUEST_REFRESH_DELAY,
     UNDO_UPDATE_LISTENER,
 )
@@ -192,6 +193,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data[DOMAIN][entry.entry_id] = {
         CONF_NAME: config[CONF_NAME],
+        CONF_HOST: config[CONF_HOST],
+        CONF_PUSH_PASSWORD: config.get(CONF_PUSH_PASSWORD),
         CONTROLLER: ipx,
         COORDINATOR: coordinator,
         CONF_DEVICES: {},
@@ -233,25 +236,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Provide endpoints for the IPX to call to push states
     if CONF_PUSH_PASSWORD in config:
-        hass.http.register_view(
-            IpxRequestView(
-                config[CONF_HOST], config[CONF_PUSH_PASSWORD], config[CONF_NAME]
-            )
-        )
-        hass.http.register_view(
-            IpxRequestDataView(
-                config[CONF_HOST], config[CONF_PUSH_PASSWORD], config[CONF_NAME]
-            )
-        )
-
-        hass.http.register_view(
-            IpxRequestRefreshView(
-                config[CONF_HOST],
-                config[CONF_PUSH_PASSWORD],
-                config[CONF_NAME],
-                coordinator,
-            )
-        )
+        # Views can't be unregistered: register each URL once and point it to
+        # the current entry, so it keeps working after a reload
+        push_views = hass.data.setdefault(PUSH_VIEWS, {})
+        for view in (
+            IpxRequestView(entry.entry_id, config[CONF_NAME]),
+            IpxRequestDataView(entry.entry_id, config[CONF_NAME]),
+            IpxRequestRefreshView(entry.entry_id, config[CONF_NAME]),
+        ):
+            if view.url in push_views:
+                push_views[view.url].entry_id = entry.entry_id
+            else:
+                hass.http.register_view(view)
+                push_views[view.url] = view
     else:
         _LOGGER.info(
             "No %s parameter provided in configuration, skip API call handling for IPX800 PUSH",
