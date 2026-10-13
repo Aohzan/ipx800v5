@@ -90,7 +90,7 @@ Ajoutez votre configuration `ipx800v5` dans votre fichier `configuration.yaml`.
 | `io_numbers`   | array[int] | no       | -       | Numéros des entrées/sorties concernées (pour `climate` et `xpwm_rgb`)                |
 | `icon`         | string     | no       | -       | Icône                                                                                |
 | `device_class` | string     | no       | -       | Device class                                                                         |
-| `transition`   | int        | no       | -       | Délais de changement d'état                                                          |
+| `transition`   | int        | no       | -       | Sans effet, l'API de l'IPX800 V5 ne gère pas de délai de changement d'état           |
 | `type`         | string     | no       | -       | Type d'entité spécifique  [voir les possibilités](#Fonctionnalités)                  |
 | `max_temp`     | float      | no       | 22      | Température maximale (pour thermostat uniquement)                                     |
 | `target_temp_step` | float  | no       | 0.5     | Pas de réglage de la température (pour thermostat uniquement)                        |
@@ -183,7 +183,6 @@ ipx800v5:
         ext_number: 0
         io_numbers: [9, 10, 11, 12]
         type: xpwm_rgbw
-        transition: 1.5
       ## xthl
       - name: Capteur Rez-de-Chaussée
         component: sensor

@@ -8,10 +8,8 @@ from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ATTR_RGB_COLOR,
     ATTR_RGBW_COLOR,
-    ATTR_TRANSITION,
     ColorMode,
     LightEntity,
-    LightEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_TYPE
@@ -172,7 +170,6 @@ class X8RLight(IpxEntity, LightEntity):
 class XDimmerLight(IpxEntity, LightEntity):
     """Representation of a IPX Light through X-Dimmer."""
 
-    _attr_supported_features = LightEntityFeature.TRANSITION
     _attr_supported_color_modes = {ColorMode.BRIGHTNESS}
     _attr_color_mode = ColorMode.BRIGHTNESS
 
@@ -201,8 +198,6 @@ class XDimmerLight(IpxEntity, LightEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the light."""
-        if ATTR_TRANSITION in kwargs:
-            self._transition = kwargs[ATTR_TRANSITION]
         if ATTR_BRIGHTNESS in kwargs:
             await self.control.set_level(
                 scaleto100(kwargs[ATTR_BRIGHTNESS]), self._transition * 1000
@@ -213,15 +208,11 @@ class XDimmerLight(IpxEntity, LightEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the light."""
-        if ATTR_TRANSITION in kwargs:
-            self._transition = kwargs[ATTR_TRANSITION]
         await self.control.off(self._transition * 1000)
         await self.coordinator.async_request_refresh()
 
     async def async_toggle(self, **kwargs: Any) -> None:
         """Toggle the light."""
-        if ATTR_TRANSITION in kwargs:
-            self._transition = kwargs[ATTR_TRANSITION]
         await self.control.toggle(self._transition * 1000)
         await self.coordinator.async_request_refresh()
 
@@ -229,7 +220,6 @@ class XDimmerLight(IpxEntity, LightEntity):
 class XPWMLight(IpxEntity, LightEntity):
     """Representation of a IPX Light through X-PWM single channel."""
 
-    _attr_supported_features = LightEntityFeature.TRANSITION
     _attr_supported_color_modes = {ColorMode.BRIGHTNESS}
     _attr_color_mode = ColorMode.BRIGHTNESS
 
@@ -262,8 +252,6 @@ class XPWMLight(IpxEntity, LightEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the light."""
-        if ATTR_TRANSITION in kwargs:
-            self._transition = kwargs[ATTR_TRANSITION]
         if ATTR_BRIGHTNESS in kwargs:
             await self.control.set_level(
                 scaleto100(kwargs[ATTR_BRIGHTNESS]), self._transition * 1000
@@ -274,15 +262,11 @@ class XPWMLight(IpxEntity, LightEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the light."""
-        if ATTR_TRANSITION in kwargs:
-            self._transition = kwargs[ATTR_TRANSITION]
         await self.control.off(self._transition * 1000)
         await self.coordinator.async_request_refresh()
 
     async def async_toggle(self, **kwargs: Any) -> None:
         """Toggle the light."""
-        if ATTR_TRANSITION in kwargs:
-            self._transition = kwargs[ATTR_TRANSITION]
         await self.control.toggle(self._transition * 1000)
         await self.coordinator.async_request_refresh()
 
@@ -290,7 +274,6 @@ class XPWMLight(IpxEntity, LightEntity):
 class XPWMRGBLight(IpxEntity, LightEntity):
     """Representation of a RGB light through 3 X-PWM channels."""
 
-    _attr_supported_features = LightEntityFeature.TRANSITION
     _attr_supported_color_modes = {ColorMode.RGB}
     _attr_color_mode = ColorMode.RGB
 
@@ -337,8 +320,6 @@ class XPWMRGBLight(IpxEntity, LightEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the light."""
-        if ATTR_TRANSITION in kwargs:
-            self._transition = kwargs[ATTR_TRANSITION]
         if ATTR_RGB_COLOR in kwargs:
             colors = kwargs[ATTR_RGB_COLOR]
             await async_gather(
@@ -403,8 +384,6 @@ class XPWMRGBLight(IpxEntity, LightEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the light."""
-        if ATTR_TRANSITION in kwargs:
-            self._transition = kwargs[ATTR_TRANSITION]
         await async_gather(
             self.xpwm_rgb_r.off(self._transition * 1000),
             self.xpwm_rgb_g.off(self._transition * 1000),
@@ -416,7 +395,6 @@ class XPWMRGBLight(IpxEntity, LightEntity):
 class XPWMRGBWLight(IpxEntity, LightEntity):
     """Representation of a RGBW light through 4 X-PWM channels."""
 
-    _attr_supported_features = LightEntityFeature.TRANSITION
     _attr_supported_color_modes = {ColorMode.RGBW}
     _attr_color_mode = ColorMode.RGBW
 
@@ -467,9 +445,6 @@ class XPWMRGBWLight(IpxEntity, LightEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the light."""
-        if ATTR_TRANSITION in kwargs:
-            self._transition = kwargs[ATTR_TRANSITION]
-
         if ATTR_RGBW_COLOR in kwargs:
             colors = kwargs[ATTR_RGBW_COLOR]
             # if only rgb color have been set
@@ -521,8 +496,6 @@ class XPWMRGBWLight(IpxEntity, LightEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the light."""
-        if ATTR_TRANSITION in kwargs:
-            self._transition = kwargs[ATTR_TRANSITION]
         await async_gather(
             self.xpwm_rgbw_w.off(self._transition * 1000),
             self.xpwm_rgbw_r.off(self._transition * 1000),
@@ -535,7 +508,6 @@ class XPWMRGBWLight(IpxEntity, LightEntity):
 class X010VLight(IpxEntity, LightEntity):
     """Representation of a X-010V output as a light."""
 
-    _attr_supported_features = LightEntityFeature.TRANSITION
     _attr_supported_color_modes = {ColorMode.BRIGHTNESS}
     _attr_color_mode = ColorMode.BRIGHTNESS
 
