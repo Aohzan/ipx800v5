@@ -38,6 +38,7 @@ from .const import (
     CONF_TARGET_TEMP_STEP,
     CONTROLLER,
     COORDINATOR,
+    DEFAULT_COOLING_MAX_TEMP,
     DEFAULT_MAX_TEMP,
     DEFAULT_MIN_TEMP,
     DEFAULT_TARGET_TEMP_STEP,
@@ -275,7 +276,11 @@ class RelayClimate(IpxEntity, ClimateEntity):
 
 
 class ThermostatClimate(IpxEntity, ClimateEntity):
-    """Representation of a IPX Thermostat."""
+    """Representation of a IPX Thermostat.
+
+    A thermostat with an inverted output drives a cooling device: it is
+    shown in cool mode instead of heat mode.
+    """
 
     _attr_supported_features = (
         ClimateEntityFeature.PRESET_MODE
@@ -285,7 +290,6 @@ class ThermostatClimate(IpxEntity, ClimateEntity):
     )
     _enable_turn_on_off_backwards_compatibility = False
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
-    _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
     _attr_preset_modes = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY, PRESET_NONE]
 
     def __init__(
@@ -299,6 +303,9 @@ class ThermostatClimate(IpxEntity, ClimateEntity):
         self.control = Thermostat(ipx, self._ext_number)
         self._attr_min_temp = self._get_nofrost_temp()
         self._attr_max_temp = device_config.get(CONF_MAX_TEMP, DEFAULT_MAX_TEMP)
+        self._cooling_max_temp = device_config.get(
+            CONF_MAX_TEMP, DEFAULT_COOLING_MAX_TEMP
+        )
         self._attr_target_temperature_step = device_config.get(
             CONF_TARGET_TEMP_STEP, DEFAULT_TARGET_TEMP_STEP
         )
@@ -307,7 +314,7 @@ class ThermostatClimate(IpxEntity, ClimateEntity):
             self._attr_name,
             self._attr_max_temp,
             self._attr_target_temperature_step,
-        )        
+        )
 
     def _get_nofrost_temp(self) -> float:
         """Get NoFrost temperature from IPX800 config."""
@@ -328,6 +335,30 @@ class ThermostatClimate(IpxEntity, ClimateEntity):
         return DEFAULT_MIN_TEMP
 
     @property
+    def _on_mode(self) -> HVACMode:
+        """Return the mode of the thermostat when on, cool if its output is inverted."""
+        return HVACMode.COOL if self.control.inverted_mode else HVACMode.HEAT
+
+    @property
+    def hvac_modes(self) -> list[HVACMode]:
+        """Return the available modes."""
+        return [self._on_mode, HVACMode.OFF]
+
+    @property
+    def min_temp(self) -> float:
+        """Return the NoFrost set point when heating, the default minimum when cooling."""
+        if self.control.inverted_mode:
+            return DEFAULT_MIN_TEMP
+        return self._attr_min_temp
+
+    @property
+    def max_temp(self) -> float:
+        """Return the maximum temperature."""
+        if self.control.inverted_mode:
+            return self._cooling_max_temp
+        return self._attr_max_temp
+
+    @property
     def current_temperature(self) -> float:
         """Get current temperature."""
         return float(self.coordinator.data[self.control.ana_measure_id]["value"])
@@ -341,13 +372,15 @@ class ThermostatClimate(IpxEntity, ClimateEntity):
     def hvac_mode(self) -> HVACMode:
         """Return current mode if heating or not."""
         if self.coordinator.data[self.control.io_onoff_id]["on"] is True:
-            return HVACMode.HEAT
+            return self._on_mode
         return HVACMode.OFF
 
     @property
     def hvac_action(self) -> HVACAction:
         """Return current action if heating or not."""
         if self.coordinator.data[self.control.io_state_id]["on"] is True:
+            if self.control.inverted_mode:
+                return HVACAction.COOLING
             return HVACAction.HEATING
         if self.coordinator.data[self.control.io_onoff_id]["on"] is False:
             return HVACAction.OFF
@@ -373,7 +406,7 @@ class ThermostatClimate(IpxEntity, ClimateEntity):
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set hvac mode."""
-        if hvac_mode == HVACMode.HEAT:
+        if hvac_mode in (HVACMode.HEAT, HVACMode.COOL):
             await self.control.on()
             await self.control.set_mode_comfort()
         elif hvac_mode == HVACMode.OFF:
@@ -401,4 +434,4 @@ class ThermostatClimate(IpxEntity, ClimateEntity):
 
     async def async_turn_on(self) -> None:
         """Turn on."""
-        await self.async_set_hvac_mode(HVACMode.HEAT)
+        await self.async_set_hvac_mode(self._on_mode)

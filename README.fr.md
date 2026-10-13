@@ -28,7 +28,7 @@ L'intégration `ipx800v5` vous permet de contrôler et récupérer des informati
   - X-Display (1 et 2) via `select` pour le choix de l'écran, `switch` et `sensor`
   - X-400 CT et X-400 Ana (via un X-Bridge) via `sensor`, en ampères pour les pinces de la X-400 CT [`x400`]
 - Objets
-  - Thermostat via `climate` et `number` pour les réglages de preset [`thermostat`]
+  - Thermostat via `climate`, `number` pour les réglages de preset et `switch` pour le mode refroidissement [`thermostat`]
   - Counter via `number` [`counter`]
   - Tempo via `binary_sensor`, `switch` pour l'activer ou non et `number` pour régler la temporisation [`tempo`]
   - Access Control via `binary_sensor` pour récupérer l'état (push obligatoire) [`access_control`]
@@ -97,6 +97,8 @@ Ajoutez votre configuration `ipx800v5` dans votre fichier `configuration.yaml`.
 | `target_temp_step` | float  | no       | 0.5     | Pas de réglage de la température (pour thermostat uniquement)                        |
 
 **Note pour les thermostats** : `min_temp` n'est **pas configurable** car il est toujours synchronisé avec la valeur **NoFrost** (hors gel) configurée dans l'IPX800 pour des raisons de sécurité. Seuls `max_temp` et `target_temp_step` peuvent être personnalisés.
+
+**Mode refroidissement** : le switch *Cooling Mode* (catégorie configuration) active le mode inversé du thermostat dans l'IPX800 : la sortie est active quand la température dépasse la consigne, pour piloter un appareil de refroidissement. Le thermostat passe alors en mode `cool`, avec une température minimale de 7 °C et une maximale de 35 °C (ou `max_temp` si défini).
 
 #### Exemple
 
