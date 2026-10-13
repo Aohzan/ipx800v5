@@ -104,7 +104,9 @@ class IpxEntity(CoordinatorEntity):
             # The parent IPX device is registered in async_setup_entry before
             # the platforms are set up, so via_device always resolves.
             self._attr_device_info = DeviceInfo(
-                identifiers={(DOMAIN, slugify(device_name))},
+                identifiers={
+                    (DOMAIN, f"{self.ipx.mac_address}_{slugify(device_name)}")
+                },
                 manufacturer="GCE Electronics",
                 model=device_model,
                 name=device_name,

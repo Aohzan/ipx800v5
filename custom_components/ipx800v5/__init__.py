@@ -18,13 +18,20 @@ from homeassistant.const import (
     CONF_TYPE,
     CONF_UNIT_OF_MEASUREMENT,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.device_registry import (
     CONNECTION_NETWORK_MAC,
+    DeviceEntry,
+    DeviceIdentifierCollisionError,
+    async_entries_for_config_entry,
     async_get as async_get_device_registry,
+)
+from homeassistant.helpers.entity_registry import (
+    async_entries_for_device,
+    async_get as async_get_entity_registry,
 )
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -238,6 +245,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         sw_version=ipx.firmware_version,
         configuration_url=f"http://{config[CONF_HOST]}:{config[CONF_PORT]}/",
     )
+    _async_migrate_extension_devices(hass, entry, ipx.mac_address)
 
     hass.data[DOMAIN][entry.entry_id] = {
         CONF_NAME: config[CONF_NAME],
@@ -277,6 +285,48 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
 
     return True
+
+
+@callback
+def _async_migrate_extension_devices(
+    hass: HomeAssistant, entry: ConfigEntry, mac_address: str
+) -> None:
+    """Prefix the extension device identifiers with the IPX800 MAC address.
+
+    Extension devices were identified by their name only, which merged the
+    devices of extensions having the same name on several IPX800. Devices
+    already shared between entries are left as is: their entities move to
+    new devices for each IPX800.
+    """
+    device_registry = async_get_device_registry(hass)
+    for device in async_entries_for_config_entry(device_registry, entry.entry_id):
+        if device.config_entries != {entry.entry_id}:
+            continue
+        identifiers = {
+            (domain, identifier)
+            if domain != DOMAIN
+            or identifier == mac_address
+            or identifier.startswith(f"{mac_address}_")
+            else (domain, f"{mac_address}_{identifier}")
+            for domain, identifier in device.identifiers
+        }
+        if identifiers == device.identifiers:
+            continue
+        try:
+            device_registry.async_update_device(device.id, new_identifiers=identifiers)
+        except DeviceIdentifierCollisionError:
+            _LOGGER.warning("Cannot migrate the identifiers of device %s", device.name)
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, entry: ConfigEntry, device_entry: DeviceEntry
+) -> bool:
+    """Allow removing devices left without entities, like the merged ones."""
+    return not async_entries_for_device(
+        async_get_entity_registry(hass),
+        device_entry.id,
+        include_disabled_entities=True,
+    )
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
