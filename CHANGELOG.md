@@ -1,5 +1,37 @@
 # Changelog
 
+## [2.2.0](https://github.com/Aohzan/ipx800v5/compare/2.1.1...2.2.0) (2026-10-13)
+
+### Features
+
+* add device classes to reboot, AC power and fault entities ([104a9d8](https://github.com/Aohzan/ipx800v5/commit/104a9d85e5c7cb010b75024141a4d9a1661d5e67))
+* add X-400 CT and X-400 Ana sensors ([ceed812](https://github.com/Aohzan/ipx800v5/commit/ceed81254d1c232351afb2f0fcb90181975ae58b)), closes [#21](https://github.com/Aohzan/ipx800v5/issues/21)
+* record long-term statistics for IPX800 analog inputs ([6b87441](https://github.com/Aohzan/ipx800v5/commit/6b874413cd0beae8c123125ce45c3446bdbad018))
+* support cooling thermostats ([09dbecc](https://github.com/Aohzan/ipx800v5/commit/09dbecc108687e123c0d64a62c11b044aa052543)), closes [#26](https://github.com/Aohzan/ipx800v5/issues/26)
+
+### Bug Fixes
+
+* apply options flow changes to UI entries ([e4e99e6](https://github.com/Aohzan/ipx800v5/commit/e4e99e6fab89cedf5b621f73d6d56842b180cc2e))
+* **deps:** bump pypx800v5 to 1.4.4 ([e7bf4f4](https://github.com/Aohzan/ipx800v5/commit/e7bf4f42d4ada2f1bb67428f50cf7a8bfab210f1))
+* index X-Display screens with the int screen id ([34eb54f](https://github.com/Aohzan/ipx800v5/commit/34eb54fa9a75b5b467030655e0b1651b559b027e))
+* keep entity attributes defined by entity classes ([238731f](https://github.com/Aohzan/ipx800v5/commit/238731fdf82a6251f7d54023edf2ff935f20e1e5))
+* keep entry data when unloading platforms fails ([9f10a79](https://github.com/Aohzan/ipx800v5/commit/9f10a79b887f1f6771ea19d6a3fa91854dc8339a))
+* keep push endpoints working after an entry reload ([48c1d82](https://github.com/Aohzan/ipx800v5/commit/48c1d8227058e11bd6ee05bb2782e0173a0d33bf))
+* link extension devices to the IPX800 with via_device_id ([0bf1906](https://github.com/Aohzan/ipx800v5/commit/0bf1906987b7904c54848cc5c0311cfc993e7c19))
+* read the access control last code from polled values ([631432c](https://github.com/Aohzan/ipx800v5/commit/631432cacf1d00dfc7988d4f8d98c0f1d6348ffb))
+* reject malformed push requests instead of failing ([1676bca](https://github.com/Aohzan/ipx800v5/commit/1676bca2f6c30f6a2e0d6b4fef56a40329d4cd01))
+* retry setup when the IPX800 is unreachable ([d7c5975](https://github.com/Aohzan/ipx800v5/commit/d7c59756ce41a6ab00e05e5c34224f50e7c8046b))
+* scope extension device identifiers by IPX800 ([d41f11d](https://github.com/Aohzan/ipx800v5/commit/d41f11d25887547c473dac649167f7ee2fede20b))
+* show saved X-8R relay types in options flow ([1356e79](https://github.com/Aohzan/ipx800v5/commit/1356e794de58150655adaac7ead0442fc6541d70))
+* stop advertising light transitions ([3ca7aa0](https://github.com/Aohzan/ipx800v5/commit/3ca7aa08906e07ad91fbdaef7f7fce6ff72f2b16))
+* turn on X-PWM RGB lights at the default brightness ([63349f0](https://github.com/Aohzan/ipx800v5/commit/63349f05eed8e6a23e86b2baa8566aa4646d643b))
+* update number and select states after a change ([e1079d3](https://github.com/Aohzan/ipx800v5/commit/e1079d3725a2cdfa8784c5365d6bd83c76a4b9ca))
+* use via_device instead of deprecated device registry lookup ([bd1952e](https://github.com/Aohzan/ipx800v5/commit/bd1952eebe914c2104a9d6f96573cfd2108ca0a7)), closes [#40](https://github.com/Aohzan/ipx800v5/issues/40)
+
+### Performance Improvements
+
+* don't request a refresh when adding coordinator entities ([555cfbe](https://github.com/Aohzan/ipx800v5/commit/555cfbeeab365304bbb06a63fa234e55e3679a95))
+
 ## [2.1.1](https://github.com/Aohzan/ipx800v5/compare/2.1.0...2.1.1) (2026-09-09)
 
 ### Bug Fixes
