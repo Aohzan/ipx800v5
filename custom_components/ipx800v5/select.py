@@ -77,11 +77,7 @@ class XDisplayScreenSelect(IpxEntity, SelectEntity):
         )
         if len(self.control.screens) < screen_id + 1:
             return None
-        return {
-            "type": self.control.screens[
-                self.coordinator.data[self.control.ana_current_screen_id]["value"]
-            ].type
-        }
+        return {"type": self.control.screens[screen_id].type}
 
     async def async_select_option(self, option: str) -> None:
         """Change the current screen."""
