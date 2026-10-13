@@ -2,6 +2,7 @@
 
 import logging
 from base64 import b64decode
+from hmac import compare_digest
 from http import HTTPStatus
 
 from aiohttp import web
@@ -28,8 +29,13 @@ def check_api_auth(request, host, push_password) -> bool:
         split = header_auth.strip().split(" ")
         if len(split) != 2 or split[0].strip().lower() != "basic":
             raise ApiCallNotAuthorized("Malformed Authorization header")
-        username, password = b64decode(split[1]).decode().split(":", 1)
-        if username != PUSH_USERNAME or password != push_password:
+        try:
+            username, password = b64decode(split[1]).decode().split(":", 1)
+        except ValueError as err:
+            raise ApiCallNotAuthorized("Malformed Authorization header") from err
+        if username != PUSH_USERNAME or not compare_digest(
+            password.encode(), push_password.encode()
+        ):
             raise ApiCallNotAuthorized("API call authentication invalid.")
     except ApiCallNotAuthorized as err:
         _LOGGER.warning(err)
@@ -109,8 +115,11 @@ class IpxRequestDataView(IpxPushView):
         hass = request.app["hass"]
         entities_data = data.split("&")
         for entity_data in entities_data:
-            entity_id = entity_data.split("=")[0]
-            state = "on" if entity_data.split("=")[1] in ["1", "on", "true"] else "off"
+            entity_id, separator, value = entity_data.partition("=")
+            if not separator:
+                _LOGGER.warning("Malformed push data ignored: %s", entity_data)
+                continue
+            state = "on" if value in ["1", "on", "true"] else "off"
 
             old_state = hass.states.get(entity_id)
             _LOGGER.debug("Update %s to state %s", entity_id, state)
@@ -142,5 +151,5 @@ class IpxRequestRefreshView(IpxPushView):
         return web.Response(status=HTTPStatus.OK, text="OK")
 
 
-class ApiCallNotAuthorized(BaseException):
+class ApiCallNotAuthorized(Exception):
     """API call for IPX800 view not authorized."""
