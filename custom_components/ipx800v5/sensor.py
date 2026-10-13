@@ -15,6 +15,7 @@ from homeassistant.const import (
     LIGHT_LUX,
     PERCENTAGE,
     EntityCategory,
+    UnitOfElectricCurrent,
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
@@ -22,12 +23,14 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from pypx800v5 import (
+    EXT_X400,
     EXT_XDISPLAY,
     EXT_XTHL,
     IPX,
     IPX800,
     OBJECT_ACCESS_CONTROL,
     TYPE_ANA,
+    X400,
     XTHL,
     IPX800AnalogInput,
     XDisplay,
@@ -93,6 +96,8 @@ async def async_setup_entry(
                     device[CONF_NAME],
                 )
             )
+        elif device[CONF_EXT_TYPE] == EXT_X400:
+            entities.append(X400Sensor(device, controller, coordinator))
         elif device[CONF_EXT_TYPE] == EXT_XDISPLAY:
             entities.append(XDisplayAutoOffSensor(device, controller, coordinator))
             entities.append(XDisplaySensitiveSensor(device, controller, coordinator))
@@ -194,6 +199,28 @@ class XTHLSensor(IpxEntity, SensorEntity):
     def native_value(self) -> float:
         """Return the current value."""
         return round(self.coordinator.data[self._state_id]["value"], 1)
+
+
+class X400Sensor(IpxEntity, SensorEntity):
+    """Representation of a X-400 input, current clamp (CT) or analog sensor."""
+
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(
+        self, device_config: dict, ipx: IPX800, coordinator: DataUpdateCoordinator
+    ) -> None:
+        """Initialize the X-400 sensor."""
+        super().__init__(device_config, ipx, coordinator)
+        self.control = X400(ipx, self._ext_number, self._io_number)
+        if self.control.is_current_clamp:
+            self._attr_device_class = SensorDeviceClass.CURRENT
+            self._attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
+            self._attr_suggested_display_precision = 2
+
+    @property
+    def native_value(self) -> float:
+        """Return the current value."""
+        return self.coordinator.data[self.control.ana_value_id]["value"]
 
 
 class XDisplayAutoOffSensor(IpxEntity, SensorEntity):

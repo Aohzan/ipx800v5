@@ -26,6 +26,7 @@ L'intégration `ipx800v5` vous permet de contrôler et récupérer des informati
   - X-24D via `binary_sensor` [`x24d`]
   - X-010V via `light` pour la gestion du niveau de sortie [`x010v`]
   - X-Display (1 et 2) via `select` pour le choix de l'écran, `switch` et `sensor`
+  - X-400 CT et X-400 Ana (via un X-Bridge) via `sensor`, en ampères pour les pinces de la X-400 CT [`x400`]
 - Objets
   - Thermostat via `climate` et `number` pour les réglages de preset [`thermostat`]
   - Counter via `number` [`counter`]
