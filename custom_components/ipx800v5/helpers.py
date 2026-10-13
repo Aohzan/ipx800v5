@@ -3,9 +3,12 @@
 import logging
 from itertools import groupby
 
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass
+from homeassistant.components.button import ButtonDeviceClass
 from homeassistant.config_entries import SOURCE_USER, ConfigEntry
 from homeassistant.const import (
     CONF_API_KEY,
+    CONF_DEVICE_CLASS,
     CONF_ENTITY_CATEGORY,
     CONF_ID,
     CONF_NAME,
@@ -136,6 +139,7 @@ def build_ipx_system_entities(ipx: IPX800, enable_diag_sensors: bool = False) ->
             CONF_COMPONENT: "button",
             CONF_EXT_TYPE: IPX,
             CONF_EXT_NUMBER: 0,
+            CONF_DEVICE_CLASS: ButtonDeviceClass.RESTART,
             CONF_ENTITY_CATEGORY: EntityCategory.DIAGNOSTIC,
         }
     ]
@@ -169,6 +173,7 @@ def build_ipx_system_entities(ipx: IPX800, enable_diag_sensors: bool = False) ->
                 CONF_EXT_NUMBER: 0,
                 CONF_TYPE: TYPE_IO,
                 CONF_ID: ipx.ipx_config[ipx.io_acpower_id],
+                CONF_DEVICE_CLASS: BinarySensorDeviceClass.POWER,
                 CONF_ENTITY_CATEGORY: EntityCategory.DIAGNOSTIC,
             }
         )
