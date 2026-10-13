@@ -33,7 +33,7 @@ async def async_setup_entry(
         if device[CONF_EXT_TYPE] == EXT_XDISPLAY
     ]
 
-    async_add_entities(entities, True)
+    async_add_entities(entities)
 
 
 class XDisplayScreenSelect(IpxEntity, SelectEntity):

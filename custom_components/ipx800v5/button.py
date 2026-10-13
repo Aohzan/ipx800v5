@@ -30,7 +30,7 @@ async def async_setup_entry(
         if device[CONF_EXT_TYPE] == IPX:
             entities.append(RebootButton(device, controller, coordinator))  # noqa: PERF401
 
-    async_add_entities(entities, True)
+    async_add_entities(entities)
 
 
 class RebootButton(IpxEntity, ButtonEntity):

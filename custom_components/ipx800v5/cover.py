@@ -37,7 +37,7 @@ async def async_setup_entry(
         if device[CONF_EXT_TYPE] == EXT_X4VR:
             entities.append(X4VRCover(device, controller, coordinator))  # noqa: PERF401
 
-    async_add_entities(entities, True)
+    async_add_entities(entities)
 
 
 class X4VRCover(IpxEntity, CoverEntity):

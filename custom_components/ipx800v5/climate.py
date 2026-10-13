@@ -68,7 +68,7 @@ async def async_setup_entry(
         elif device[CONF_EXT_TYPE] == OBJECT_THERMOSTAT:
             entities.append(ThermostatClimate(device, controller, coordinator))
 
-    async_add_entities(entities, True)
+    async_add_entities(entities)
 
 
 class X4FPClimate(IpxEntity, ClimateEntity):
