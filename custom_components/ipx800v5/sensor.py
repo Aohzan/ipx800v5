@@ -148,6 +148,8 @@ class AnalogSensor(IpxEntity, SensorEntity):
 class IpxAnalogInputSensor(IpxEntity, SensorEntity):
     """Representation of a IPX analog input as a sensor."""
 
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
     def __init__(
         self, device_config: dict, ipx: IPX800, coordinator: DataUpdateCoordinator
     ) -> None:
