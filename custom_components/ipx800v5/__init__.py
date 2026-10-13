@@ -163,9 +163,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             f"Cannot get the configuration of the {config[CONF_HOST]} IPX800 V5"
         ) from exception
 
-    # Parse devices config is correct and supported
-    # devices = check_devices_list(devices)
-
     # build list of entities according to the configuration and discovered extensions and objects
     auto_entities = []
     auto_entities.extend(

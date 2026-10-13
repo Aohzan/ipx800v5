@@ -48,8 +48,6 @@ from .const import (
     DEFAULT_IPX_NAME,
     TYPE_IPX_OPENCOLL,
     TYPE_IPX_OPTO,
-    TYPE_XPWM_RGB,
-    TYPE_XPWM_RGBW,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -72,61 +70,6 @@ def get_entry_config(entry: ConfigEntry) -> dict:
 def filter_entities_by_platform(devices: list, component: str) -> list:
     """Filter device list by platform."""
     return list(filter(lambda d: d[CONF_COMPONENT] == component, devices))
-
-
-def check_devices_config(devices_config: list) -> list:
-    """Check and build device list from config."""
-    _LOGGER.debug("Check and build devices configuration")
-
-    devices = []
-    for device_config in devices_config:
-        _LOGGER.debug("Read device name: %s", device_config.get(CONF_NAME))
-
-        if (
-            device_config[CONF_EXT_TYPE]
-            in [
-                EXT_X4VR,
-                EXT_XTHL,
-                EXT_X24D,
-                EXT_X4FP,
-                EXT_X8D,
-                EXT_X8R,
-                EXT_XDIMMER,
-                EXT_XPWM,
-                EXT_XDISPLAY,
-            ]
-            and CONF_EXT_NUMBER not in device_config
-        ):
-            _LOGGER.error(
-                "Device from extension %s skipped: %s must have %s set",
-                device_config[CONF_NAME],
-                device_config[CONF_EXT_TYPE],
-                CONF_EXT_NUMBER,
-            )
-            continue
-
-        # Check if RGB/RBW or FP/RELAY have ids set
-        if (
-            device_config[CONF_TYPE] in [TYPE_XPWM_RGB, TYPE_XPWM_RGBW]
-            or (
-                device_config[CONF_EXT_TYPE] in [IPX, EXT_X8R]
-                and device_config[CONF_COMPONENT] == "climate"
-            )
-        ) and CONF_IO_NUMBERS not in device_config:
-            _LOGGER.error(
-                "Device %s skipped: RGB/RGBW and climate relais must have %s set",
-                device_config[CONF_NAME],
-                CONF_IO_NUMBERS,
-            )
-            continue
-
-        devices.append(device_config)
-        _LOGGER.info(
-            "Device %s added (component: %s)",
-            device_config[CONF_NAME],
-            device_config[CONF_COMPONENT],
-        )
-    return devices
 
 
 def get_device_in_devices_config(
