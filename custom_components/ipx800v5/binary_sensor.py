@@ -219,6 +219,7 @@ class ThermostatFaultStateBinarySensor(IpxEntity, BinarySensorEntity):
         """Initialize the sensor of the tempo."""
         super().__init__(device_config, ipx, coordinator, suffix_name="Fault")
         self.control = Thermostat(ipx, self._ext_number)
+        self._attr_device_class = BinarySensorDeviceClass.PROBLEM
 
     @property
     def is_on(self) -> bool:
