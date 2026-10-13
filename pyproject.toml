@@ -1,0 +1,9 @@
+[project]
+name = "ipx800v5"
+version = "0.1.0"
+description = "GCE IPX800 V5 integration for Home Assistant"
+requires-python = ">=3.14"
+dependencies = [
+    "homeassistant>=2026.2.3",
+    "pypx800v5>=1.5.0",
+]

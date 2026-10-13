@@ -1,0 +1,25 @@
+name: Requirements
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  requirements:
+    name: Home Assistant constraints
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+
+      # With the package constraints of the oldest supported Home Assistant
+      - name: Check requirements against Home Assistant constraints
+        run: python3 scripts/sync_requirements.py --check
