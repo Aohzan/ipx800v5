@@ -58,12 +58,15 @@ class IpxEntity(CoordinatorEntity):
         self._attr_name: str = device_config[CONF_NAME]
         if suffix_name:
             self._attr_name = f"{self._attr_name} {suffix_name}"
-        self._attr_device_class = device_config.get(CONF_DEVICE_CLASS)
-        self._attr_native_unit_of_measurement = device_config.get(
-            CONF_UNIT_OF_MEASUREMENT
-        )
-        self._attr_icon = device_config.get(CONF_ICON)
-        self._attr_entity_category = device_config.get(CONF_ENTITY_CATEGORY)
+        # Only override the defaults set by the entity classes when configured
+        if (device_class := device_config.get(CONF_DEVICE_CLASS)) is not None:
+            self._attr_device_class = device_class
+        if (unit := device_config.get(CONF_UNIT_OF_MEASUREMENT)) is not None:
+            self._attr_native_unit_of_measurement = unit
+        if (icon := device_config.get(CONF_ICON)) is not None:
+            self._attr_icon = icon
+        if (entity_category := device_config.get(CONF_ENTITY_CATEGORY)) is not None:
+            self._attr_entity_category = entity_category
         self._attr_unique_id = "_".join(
             [
                 DOMAIN,
