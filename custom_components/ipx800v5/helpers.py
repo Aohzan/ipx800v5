@@ -25,6 +25,7 @@ from pypx800v5 import (
     EXT_X8D,
     EXT_X8R,
     EXT_X24D,
+    EXT_X400,
     EXT_XDIMMER,
     EXT_XDISPLAY,
     EXT_XPWM,
@@ -426,6 +427,21 @@ def build_extensions_entities(
                                 {
                                     CONF_NAME: f"{extension[API_CONFIG_NAME]} Sortie {i + 1}",
                                     CONF_COMPONENT: "light",
+                                    CONF_EXT_TYPE: ext_type,
+                                    CONF_EXT_NUMBER: ext_number,
+                                    CONF_EXT_NAME: extension[API_CONFIG_NAME],
+                                    CONF_IO_NUMBER: i + 1,
+                                },
+                            )
+                        )
+                elif ext_type == EXT_X400:
+                    for i in range(4):
+                        entities.append(  # noqa: PERF401
+                            get_device_in_devices_config(
+                                devices_config,
+                                {
+                                    CONF_NAME: f"{extension[API_CONFIG_NAME]} Input {i + 1}",
+                                    CONF_COMPONENT: "sensor",
                                     CONF_EXT_TYPE: ext_type,
                                     CONF_EXT_NUMBER: ext_number,
                                     CONF_EXT_NAME: extension[API_CONFIG_NAME],
