@@ -8,11 +8,7 @@ from homeassistant.const import (
     CONF_NAME,
     CONF_UNIT_OF_MEASUREMENT,
 )
-from homeassistant.helpers.device_registry import (
-    CONNECTION_NETWORK_MAC,
-    DeviceInfo,
-    async_get as async_get_device_registry,
-)
+from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, DeviceInfo
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -49,7 +45,6 @@ class IpxEntity(CoordinatorEntity):
         super().__init__(coordinator)
 
         self.ipx = ipx
-        self._device_config = device_config
         self._transition = int(
             device_config.get(CONF_TRANSITION, DEFAULT_TRANSITION) * 1000
         )
@@ -85,51 +80,34 @@ class IpxEntity(CoordinatorEntity):
             "io": self._io_number or self._io_numbers or self._io_id,
         }
 
-        self._device_name = device_name
-        self._device_info: DeviceInfo | None = None
-
         configuration_url = f"http://{self.ipx.host}:{self.ipx.port}/"
 
-        self._device_model = (
+        device_model = (
             Upper(self._ext_type[:1] + "-" + self._ext_type[1:])
             if self._ext_type in EXTENSIONS
             else "IPX800 V5"
         )
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Return device info, resolving via_device_id from the device registry."""
-        if self._device_info is not None:
-            return self._device_info
-
-        configuration_url = f"http://{self.ipx.host}:{self.ipx.port}/"
-
         if self._ext_type == IPX:
-            self._device_info = DeviceInfo(
+            self._attr_device_info = DeviceInfo(
                 identifiers={(DOMAIN, self.ipx.mac_address)},
                 manufacturer="GCE Electronics",
-                model=self._device_model,
-                name=self.coordinator.name,
+                model=device_model,
+                name=coordinator.name,
                 configuration_url=configuration_url,
                 sw_version=self.ipx.firmware_version,
                 connections={(CONNECTION_NETWORK_MAC, str(self.ipx.mac_address))},
             )
         else:
-            device_name = self._device_name or self._device_config.get(
+            device_name = device_name or device_config.get(
                 CONF_EXT_NAME, f"{Upper(self._ext_type)} N°{self._ext_number}"
             )
-            dev_reg = async_get_device_registry(self.hass)
-            parent_device = dev_reg.async_get_device(
-                identifiers={(DOMAIN, self.ipx.mac_address)},
-                connections=None,
-            )
-            self._device_info = DeviceInfo(
+            # The parent IPX device is registered in async_setup_entry before
+            # the platforms are set up, so via_device always resolves.
+            self._attr_device_info = DeviceInfo(
                 identifiers={(DOMAIN, slugify(device_name))},
                 manufacturer="GCE Electronics",
-                model=self._device_model,
+                model=device_model,
                 name=device_name,
                 configuration_url=configuration_url,
-                via_device_id=parent_device.id if parent_device else None,
+                via_device=(DOMAIN, self.ipx.mac_address),
             )
-
-        return self._device_info
