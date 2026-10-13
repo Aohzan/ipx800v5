@@ -30,6 +30,8 @@ from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from pypx800v5 import (
     IPX800,
+    OBJECT_ACCESS_CONTROL,
+    AccessControl,
     IPX800CannotConnectError,
     IPX800InvalidAuthError,
     IPX800RequestError,
@@ -154,10 +156,46 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             f"Cannot get the configuration of the {config[CONF_HOST]} IPX800 V5"
         ) from exception
 
+    # Parse devices config is correct and supported
+    # devices = check_devices_list(devices)
+
+    # build list of entities according to the configuration and discovered extensions and objects
+    auto_entities = []
+    auto_entities.extend(
+        build_ipx_entities(
+            entry.source, config[CONF_DEVICES], config.get(CONF_DEVICES_AUTO, [])
+        )
+    )
+    auto_entities.extend(
+        build_ipx_system_entities(ipx, config.get(CONF_DIAG_SENSORS, False))
+    )
+    auto_entities.extend(
+        build_extensions_entities(
+            entry.source, ipx, config[CONF_DEVICES], config.get(CONF_DEVICES_AUTO, [])
+        )
+    )
+    auto_entities.extend(
+        build_objects_entities(
+            entry.source, ipx, config[CONF_DEVICES], config.get(CONF_DEVICES_AUTO, [])
+        )
+    )
+    entities = list(config[CONF_DEVICES])
+    entities.extend(remove_duplicate_entities(auto_entities, config[CONF_DEVICES]))
+
+    # Text values are not part of the global io/ana states, poll the ones used
+    str_ids = [
+        AccessControl(ipx, device[CONF_EXT_NUMBER]).str_last_code_id
+        for device in filter_entities_by_platform(entities, "sensor")
+        if device[CONF_EXT_TYPE] == OBJECT_ACCESS_CONTROL
+    ]
+
     async def async_update_data():
         """Fetch data from API."""
         try:
-            return await ipx.global_get()
+            data = await ipx.global_get()
+            for str_id in str_ids:
+                data[str_id] = {"_id": str_id, "value": await ipx.get_str(str_id)}
+            return data
         except IPX800InvalidAuthError as err:
             raise UpdateFailed("Authentication error on IPX800") from err
         except (IPX800CannotConnectError, IPX800RequestError) as err:
@@ -209,32 +247,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         COORDINATOR: coordinator,
         CONF_DEVICES: {},
     }
-
-    # Parse devices config is correct and supported
-    # devices = check_devices_list(devices)
-
-    # build list of entities according to the configuration and discovered extensions and objects
-    auto_entities = []
-    auto_entities.extend(
-        build_ipx_entities(
-            entry.source, config[CONF_DEVICES], config.get(CONF_DEVICES_AUTO, [])
-        )
-    )
-    auto_entities.extend(
-        build_ipx_system_entities(ipx, config.get(CONF_DIAG_SENSORS, False))
-    )
-    auto_entities.extend(
-        build_extensions_entities(
-            entry.source, ipx, config[CONF_DEVICES], config.get(CONF_DEVICES_AUTO, [])
-        )
-    )
-    auto_entities.extend(
-        build_objects_entities(
-            entry.source, ipx, config[CONF_DEVICES], config.get(CONF_DEVICES_AUTO, [])
-        )
-    )
-    entities = list(config[CONF_DEVICES])
-    entities.extend(remove_duplicate_entities(auto_entities, config[CONF_DEVICES]))
 
     for platform in PLATFORMS:
         _LOGGER.debug("Load platform %s", platform)
