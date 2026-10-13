@@ -15,11 +15,13 @@ from pypx800v5 import (
     IPX,
     IPX800,
     OBJECT_TEMPO,
+    OBJECT_THERMOSTAT,
     TYPE_IO,
     X8R,
     IPX800OpenColl,
     IPX800Relay,
     Tempo,
+    Thermostat,
     XDisplay,
 )
 
@@ -63,6 +65,10 @@ async def async_setup_entry(
             entities.append(XDisplayScreenLockSwitch(device, controller, coordinator))
         elif device[CONF_EXT_TYPE] == OBJECT_TEMPO:
             entities.append(TempoEnableSwitch(device, controller, coordinator))
+        elif device[CONF_EXT_TYPE] == OBJECT_THERMOSTAT:
+            entities.append(
+                ThermostatCoolingModeSwitch(device, controller, coordinator)
+            )
 
     async_add_entities(entities)
 
@@ -303,4 +309,41 @@ class TempoEnableSwitch(IpxEntity, SwitchEntity):
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the switch."""
         await self.control.off()
+        await self.coordinator.async_request_refresh()
+
+
+class ThermostatCoolingModeSwitch(IpxEntity, SwitchEntity):
+    """Representation of the thermostat inverted output, to drive a cooling device."""
+
+    _attr_entity_category = EntityCategory.CONFIG
+    _attr_icon = "mdi:snowflake"
+
+    def __init__(
+        self,
+        device_config: dict,
+        ipx: IPX800,
+        coordinator: DataUpdateCoordinator,
+    ) -> None:
+        """Initialize the switch."""
+        super().__init__(device_config, ipx, coordinator, suffix_name="Cooling Mode")
+        self.control = Thermostat(ipx, self._ext_number)
+
+    @property
+    def is_on(self) -> bool:
+        """Return if the thermostat output is inverted."""
+        return self.control.inverted_mode
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Invert the thermostat output to drive a cooling device."""
+        await self._async_set_inverted_mode(True)
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Restore the thermostat output to drive a heating device."""
+        await self._async_set_inverted_mode(False)
+
+    async def _async_set_inverted_mode(self, inverted: bool) -> None:
+        """Update the thermostat inverted mode."""
+        await self.control.update_params(invMode=inverted)
+        self.async_write_ha_state()
+        # The thermostat climate entity reads it to show the heat or cool mode
         await self.coordinator.async_request_refresh()

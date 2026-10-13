@@ -500,6 +500,15 @@ def build_objects_entities(
                             CONF_EXT_NAME: main_entity[CONF_EXT_NAME],
                         }
                     )
+                    entities.append(
+                        {
+                            CONF_NAME: main_entity[CONF_NAME],
+                            CONF_COMPONENT: "switch",
+                            CONF_EXT_TYPE: main_entity[CONF_EXT_TYPE],
+                            CONF_EXT_NUMBER: main_entity[CONF_EXT_NUMBER],
+                            CONF_EXT_NAME: main_entity[CONF_EXT_NAME],
+                        }
+                    )
                 elif obj_type == OBJECT_COUNTER:
                     entities.append(
                         get_device_in_devices_config(
