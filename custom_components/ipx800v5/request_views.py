@@ -6,10 +6,10 @@ from http import HTTPStatus
 
 from aiohttp import web
 from homeassistant.components.http import HomeAssistantView
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.const import CONF_HOST
 from homeassistant.util import slugify
 
-from .const import PUSH_USERNAME
+from .const import CONF_PUSH_PASSWORD, COORDINATOR, DOMAIN, PUSH_USERNAME
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -37,23 +37,47 @@ def check_api_auth(request, host, push_password) -> bool:
     return True
 
 
-class IpxRequestView(HomeAssistantView):
-    """Provide a page for the device to call."""
+class IpxPushView(HomeAssistantView):
+    """Base view for the push requests of an IPX800 config entry.
+
+    Views can't be unregistered, so they are registered once and read the
+    config entry data on each request to follow its reloads.
+    """
 
     requires_auth = False
+
+    def __init__(self, entry_id: str) -> None:
+        """Init the IPX push view."""
+        self.entry_id = entry_id
+        super().__init__()
+
+    def get_entry_data(self, request) -> dict | None:
+        """Return the entry data if the request is authorized, else None."""
+        entry_data = request.app["hass"].data.get(DOMAIN, {}).get(self.entry_id)
+        if entry_data is None or entry_data[CONF_PUSH_PASSWORD] is None:
+            _LOGGER.warning("Push request for an IPX800 not loaded or without push")
+            return None
+        if not check_api_auth(
+            request, entry_data[CONF_HOST], entry_data[CONF_PUSH_PASSWORD]
+        ):
+            return None
+        return entry_data
+
+
+class IpxRequestView(IpxPushView):
+    """Provide a page for the device to call."""
+
     name = "api:ipx800v5"
 
-    def __init__(self, host: str, password: str, ipx_name: str) -> None:
+    def __init__(self, entry_id: str, ipx_name: str) -> None:
         """Init the IPX view."""
-        self.host = host
-        self.password = password
+        super().__init__(entry_id)
         self.url = "/api/%s/{entity_id}/{state}" % slugify(ipx_name)
         _LOGGER.info("Dedicated push url for '%s': '%s'", ipx_name, self.url)
-        super().__init__()
 
     async def get(self, request, entity_id, state):
         """Respond to requests from the device."""
-        if not check_api_auth(request, self.host, self.password):
+        if self.get_entry_data(request) is None:
             return web.Response(status=HTTPStatus.UNAUTHORIZED)
         _LOGGER.debug("State update pushed from IPX")
         hass = request.app["hass"]
@@ -66,23 +90,20 @@ class IpxRequestView(HomeAssistantView):
         return web.Response(status=HTTPStatus.BAD_REQUEST)
 
 
-class IpxRequestDataView(HomeAssistantView):
+class IpxRequestDataView(IpxPushView):
     """Provide a page for the device to call for send multiple data at once."""
 
-    requires_auth = False
     name = "api:ipx800v5_data"
 
-    def __init__(self, host: str, password: str, ipx_name: str) -> None:
+    def __init__(self, entry_id: str, ipx_name: str) -> None:
         """Init the IPX view."""
-        self.host = host
-        self.password = password
+        super().__init__(entry_id)
         self.url = "/api/%s_data/{data}" % slugify(ipx_name)
         _LOGGER.info("Dedicated push data url for '%s': '%s'", ipx_name, self.url)
-        super().__init__()
 
     async def get(self, request, data):
         """Respond to requests from the device."""
-        if not check_api_auth(request, self.host, self.password):
+        if self.get_entry_data(request) is None:
             return web.Response(status=HTTPStatus.UNAUTHORIZED)
         _LOGGER.debug("State update pushed from IPX")
         hass = request.app["hass"]
@@ -101,33 +122,23 @@ class IpxRequestDataView(HomeAssistantView):
         return web.Response(status=HTTPStatus.OK, text="OK")
 
 
-class IpxRequestRefreshView(HomeAssistantView):
+class IpxRequestRefreshView(IpxPushView):
     """Provide a page for the device to call for send multiple data at once."""
 
-    requires_auth = False
     name = "api:ipx800v5_refresh"
 
-    def __init__(
-        self,
-        host: str,
-        password: str,
-        ipx_name: str,
-        coordinator: DataUpdateCoordinator,
-    ) -> None:
+    def __init__(self, entry_id: str, ipx_name: str) -> None:
         """Init the IPX view."""
-        self.host = host
-        self.password = password
-        self.coordinator = coordinator
+        super().__init__(entry_id)
         self.url = f"/api/{slugify(ipx_name)}_refresh"
         _LOGGER.info("Dedicated push refresh url for '%s': '%s'", ipx_name, self.url)
-        super().__init__()
 
     async def get(self, request):
         """Respond to requests from the device."""
-        if not check_api_auth(request, self.host, self.password):
+        if (entry_data := self.get_entry_data(request)) is None:
             return web.Response(status=HTTPStatus.UNAUTHORIZED)
         _LOGGER.debug("Update asked from IPX PUSH")
-        await self.coordinator.async_request_refresh()
+        await entry_data[COORDINATOR].async_request_refresh()
         return web.Response(status=HTTPStatus.OK, text="OK")
 
 

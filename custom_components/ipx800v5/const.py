@@ -6,6 +6,7 @@ CONTROLLER = "controller"
 COORDINATOR = "coordinator"
 UNDO_UPDATE_LISTENER = "undo_update_listener"
 PUSH_USERNAME = "ipx800"
+PUSH_VIEWS = f"{DOMAIN}_push_views"
 
 DEFAULT_IPX_NAME = "IPX800 V5"
 DEFAULT_SCAN_INTERVAL = 15
