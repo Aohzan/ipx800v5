@@ -83,6 +83,7 @@ class XDisplayScreenSelect(IpxEntity, SelectEntity):
         """Change the current screen."""
         screen = next(s for s in self.control.screens if s.name == option)
         await self.control.set_screen(screen.id)
+        await self.coordinator.async_request_refresh()
 
     async def async_added_to_hass(self) -> None:
         """Call when entity is added to hass."""

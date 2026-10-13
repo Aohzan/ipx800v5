@@ -69,6 +69,7 @@ class AnalogNumber(IpxEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
         await self.ipx.update_ana(self._io_id, value)
+        await self.coordinator.async_request_refresh()
 
 
 class CounterNumber(IpxEntity, NumberEntity):
@@ -101,6 +102,7 @@ class CounterNumber(IpxEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
         await self.control.set_value(value)
+        await self.coordinator.async_request_refresh()
 
 
 class ThermostatParamNumber(IpxEntity, NumberEntity):
@@ -143,6 +145,7 @@ class ThermostatParamNumber(IpxEntity, NumberEntity):
         elif self._param == "NoFrost":
             await self.control.update_params(noFrostTemp=value)
         self._value = value
+        self.async_write_ha_state()
 
 
 class TempoDelayNumber(IpxEntity, NumberEntity):
@@ -174,3 +177,4 @@ class TempoDelayNumber(IpxEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
         await self.control.set_time(int(value))
+        await self.coordinator.async_request_refresh()
