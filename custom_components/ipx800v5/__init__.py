@@ -28,7 +28,12 @@ from homeassistant.helpers.device_registry import (
 )
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from pypx800v5 import IPX800, IPX800CannotConnectError, IPX800InvalidAuthError
+from pypx800v5 import (
+    IPX800,
+    IPX800CannotConnectError,
+    IPX800InvalidAuthError,
+    IPX800RequestError,
+)
 
 from .const import (
     CONF_COMPONENT,
@@ -50,7 +55,6 @@ from .const import (
     PLATFORMS,
     PUSH_VIEWS,
     REQUEST_REFRESH_DELAY,
-    UNDO_UPDATE_LISTENER,
 )
 from .helpers import (
     build_extensions_entities,
@@ -143,7 +147,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.error("Authentication error, check API Key")
         return False
 
-    await ipx.init_config()
+    try:
+        await ipx.init_config()
+    except (IPX800CannotConnectError, IPX800RequestError) as exception:
+        raise ConfigEntryNotReady(
+            f"Cannot get the configuration of the {config[CONF_HOST]} IPX800 V5"
+        ) from exception
 
     async def async_update_data():
         """Fetch data from API."""
@@ -151,7 +160,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             return await ipx.global_get()
         except IPX800InvalidAuthError as err:
             raise UpdateFailed("Authentication error on IPX800") from err
-        except IPX800CannotConnectError as err:
+        except (IPX800CannotConnectError, IPX800RequestError) as err:
             raise UpdateFailed(f"Failed to communicating with API: {err}") from err
 
     scan_interval = config.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
@@ -164,6 +173,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = DataUpdateCoordinator(
         hass,
         _LOGGER,
+        config_entry=entry,
         name=config[CONF_NAME],
         update_method=async_update_data,
         update_interval=timedelta(seconds=scan_interval),
@@ -175,9 +185,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         ),
     )
 
-    undo_listener = entry.add_update_listener(_async_update_listener)
+    await coordinator.async_config_entry_first_refresh()
 
-    await coordinator.async_refresh()
+    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
     device_registry = async_get_device_registry(hass)
     device_registry.async_get_or_create(
@@ -198,7 +208,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         CONTROLLER: ipx,
         COORDINATOR: coordinator,
         CONF_DEVICES: {},
-        UNDO_UPDATE_LISTENER: undo_listener,
     }
 
     # Parse devices config is correct and supported
@@ -261,8 +270,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-
-    hass.data[DOMAIN][entry.entry_id][UNDO_UPDATE_LISTENER]()
 
     hass.data[DOMAIN].pop(entry.entry_id)
 

@@ -4,7 +4,6 @@ DOMAIN = "ipx800v5"
 
 CONTROLLER = "controller"
 COORDINATOR = "coordinator"
-UNDO_UPDATE_LISTENER = "undo_update_listener"
 PUSH_USERNAME = "ipx800"
 PUSH_VIEWS = f"{DOMAIN}_push_views"
 
