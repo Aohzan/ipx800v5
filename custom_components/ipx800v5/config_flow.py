@@ -1,17 +1,30 @@
 """Config flow to configure the ipx800v5 integration."""
 
-import logging
+from collections.abc import Mapping
 from itertools import groupby
+import logging
 from typing import Any
 
-import voluptuous as vol
 from aiohttp import ClientSession
-from homeassistant import config_entries
+from pypx800v5 import (
+    API_CONFIG_NAME,
+    EXT_X8R,
+    IPX,
+    IPX800,
+    IPX800CannotConnectError,
+    IPX800InvalidAuthError,
+    IPX800RequestError,
+)
+import voluptuous as vol
+from voluptuous.util import Upper
+
 from homeassistant.config_entries import (
+    SOURCE_IMPORT,
+    SOURCE_REAUTH,
     SOURCE_USER,
-    ConfigEntry,
+    ConfigFlow,
     ConfigFlowResult,
-    OptionsFlow,
+    OptionsFlowWithReload,
 )
 from homeassistant.const import (
     CONF_API_KEY,
@@ -23,16 +36,6 @@ from homeassistant.const import (
 )
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from pypx800v5 import (
-    API_CONFIG_NAME,
-    EXT_X8R,
-    IPX,
-    IPX800,
-    IPX800CannotConnectError,
-    IPX800InvalidAuthError,
-    IPX800RequestError,
-)
-from voluptuous.util import Upper
 
 from .const import (
     CONF_COMPONENT,
@@ -45,6 +48,7 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
+from .coordinator import IpxConfigEntry
 from .helpers import get_device_in_devices_config, get_entry_config
 
 _LOGGER = logging.getLogger(__name__)
@@ -57,14 +61,24 @@ BASE_SCHEMA = vol.Schema(
         vol.Required(CONF_API_KEY): str,
     }
 )
+REAUTH_SCHEMA = vol.Schema({vol.Required(CONF_API_KEY): str})
+RECONFIGURE_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_HOST): str,
+        vol.Required(CONF_PORT): int,
+    }
+)
 
 
-@config_entries.HANDLERS.register(DOMAIN)
-class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+def _unique_id(host: str) -> str:
+    """Return the unique ID of the config entry of an IPX800."""
+    return f"{DOMAIN}, {host}"
+
+
+class IpxConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a IPX800 config flow."""
 
     VERSION = 1
-    CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     def __init__(self) -> None:
         """Initialize class variables."""
@@ -73,10 +87,10 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_import(self, import_info) -> ConfigFlowResult:
         """Import an advanced configuration from YAML config."""
-        entry = await self.async_set_unique_id(f"{DOMAIN}, {import_info[CONF_HOST]}")
+        entry = await self.async_set_unique_id(_unique_id(import_info[CONF_HOST]))
 
         if entry:
-            if entry.source == "user":
+            if entry.source == SOURCE_USER:
                 _LOGGER.error(
                     "The IPX800 V5 on %s is already configured from the UI. Delete it first if you want to configure it from configuration.yaml",
                     import_info[CONF_HOST],
@@ -97,11 +111,10 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 step_id="user", data_schema=BASE_SCHEMA, errors=errors
             )
 
-        entry = await self.async_set_unique_id(f"{DOMAIN}, {user_input[CONF_HOST]}")
-        if entry:
-            self._abort_if_unique_id_configured()
+        await self.async_set_unique_id(_unique_id(user_input[CONF_HOST]))
+        self._abort_if_unique_id_configured()
 
-        session = async_get_clientsession(self.hass, False)
+        session = async_get_clientsession(self.hass, verify_ssl=False)
 
         # Read the IPX800 configuration here to show the errors in this step
         schema, errors = await _async_get_param_schema(session, user_input, SOURCE_USER)
@@ -127,14 +140,82 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data=self.base_config | config_organizer(user_input, SOURCE_USER),
         )
 
+    async def async_step_reauth(
+        self, entry_data: Mapping[str, Any]
+    ) -> ConfigFlowResult:
+        """Handle a rejected API key."""
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Ask for a new API key."""
+        return await self._async_step_update_entry(
+            "reauth_confirm", REAUTH_SCHEMA, user_input
+        )
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Change the address of the IPX800."""
+        return await self._async_step_update_entry(
+            "reconfigure", RECONFIGURE_SCHEMA, user_input
+        )
+
+    async def _async_step_update_entry(
+        self, step_id: str, schema: vol.Schema, user_input: dict[str, Any] | None
+    ) -> ConfigFlowResult:
+        """Update the connection settings of the entry after testing them."""
+        if self.source == SOURCE_REAUTH:
+            entry = self._get_reauth_entry()
+        else:
+            entry = self._get_reconfigure_entry()
+        if entry.source == SOURCE_IMPORT:
+            # configuration.yaml replaces the entry data at each startup
+            return self.async_abort(reason="yaml_entry")
+        config = get_entry_config(entry)
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            new_config = config | user_input
+            unique_id = _unique_id(new_config[CONF_HOST])
+            if unique_id != entry.unique_id:
+                await self.async_set_unique_id(unique_id)
+                self._abort_if_unique_id_configured()
+            errors = await _test_connection(
+                async_get_clientsession(self.hass, verify_ssl=False), new_config
+            )
+            if not errors:
+                # An API key changed here replaces the one of the options
+                return self.async_update_reload_and_abort(
+                    entry,
+                    unique_id=unique_id,
+                    data_updates=user_input,
+                    options={
+                        key: value
+                        for key, value in entry.options.items()
+                        if key not in user_input
+                    },
+                )
+
+        return self.async_show_form(
+            step_id=step_id,
+            data_schema=self.add_suggested_values_to_schema(
+                schema, user_input or config
+            ),
+            errors=errors,
+        )
+
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+    def async_get_options_flow(
+        config_entry: IpxConfigEntry,
+    ) -> IpxOptionsFlowHandler:
         """Define the config flow to handle options."""
         return IpxOptionsFlowHandler()
 
 
-class IpxOptionsFlowHandler(OptionsFlow):
+class IpxOptionsFlowHandler(OptionsFlowWithReload):
     """Handle a IPX800 options flow."""
 
     def __init__(self) -> None:
@@ -150,7 +231,7 @@ class IpxOptionsFlowHandler(OptionsFlow):
 
         # Without the IPX800 configuration, the form only shows the error and
         # submitting it tries again
-        session = async_get_clientsession(self.hass, False)
+        session = async_get_clientsession(self.hass, verify_ssl=False)
         schema, errors = await _async_get_param_schema(
             session, get_entry_config(self.config_entry), self.config_entry.source
         )
@@ -159,6 +240,26 @@ class IpxOptionsFlowHandler(OptionsFlow):
         return self.async_show_form(
             step_id="init", data_schema=vol.Schema(schema), errors=errors
         )
+
+
+async def _test_connection(session: ClientSession, config: dict) -> dict[str, str]:
+    """Return the errors of a request to the IPX800."""
+    controller = IPX800(
+        host=config[CONF_HOST],
+        port=config[CONF_PORT],
+        api_key=config[CONF_API_KEY],
+        session=session,
+    )
+    try:
+        await controller.ping()
+    except IPX800InvalidAuthError:
+        return {"base": "invalid_auth"}
+    except IPX800CannotConnectError, IPX800RequestError:
+        return {"base": "cannot_connect"}
+    except Exception:
+        _LOGGER.exception("Unexpected error while connecting to the IPX800")
+        return {"base": "unknown"}
+    return {}
 
 
 async def _async_get_param_schema(

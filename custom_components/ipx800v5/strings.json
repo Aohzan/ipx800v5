@@ -50,15 +50,31 @@
           "x8r_2_7": "X-8R N°3 - Relay 7 type",
           "x8r_2_8": "X-8R N°3 - Relay 8 type"
         }
+      },
+      "reauth_confirm": {
+        "title": "IPX800 V5 authentication",
+        "description": "The IPX800 V5 rejected the API key. Enter the new one.",
+        "data": {
+          "api_key": "API Key"
+        }
+      },
+      "reconfigure": {
+        "title": "IPX800 V5 address",
+        "description": "Update the address of the IPX800 V5.",
+        "data": {
+          "host": "Host",
+          "port": "Port"
+        }
       }
     },
     "error": {
-      "invalid_auth": "Authentication error, check the API key",
       "cannot_connect": "Cannot connect to the IPX800V5, check host and port",
+      "invalid_auth": "Authentication error, check the API key",
       "unknown": "Unknown error"
     },
     "abort": {
-      "already_configured": "An IPX800 V5 with this IP already exists"
+      "already_configured": "An IPX800 V5 with this IP already exists",
+      "yaml_entry": "This IPX800 V5 is configured in configuration.yaml: update it in this file"
     }
   },
   "options": {
@@ -108,6 +124,130 @@
     "error": {
       "invalid_auth": "Authentication error, check the API key",
       "cannot_connect": "Cannot connect to the IPX800V5, check host and port"
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "ac_power": {
+        "name": "AC power"
+      },
+      "access_fail": {
+        "name": "Fail"
+      },
+      "access_success": {
+        "name": "Success"
+      },
+      "fault": {
+        "name": "Fault"
+      },
+      "long_push": {
+        "name": "Long push"
+      }
+    },
+    "button": {
+      "reboot": {
+        "name": "Reboot"
+      }
+    },
+    "number": {
+      "comfort_temperature": {
+        "name": "Comfort temperature"
+      },
+      "eco_temperature": {
+        "name": "Eco temperature"
+      },
+      "nofrost_temperature": {
+        "name": "NoFrost temperature"
+      },
+      "tempo_delay": {
+        "name": "Delay"
+      }
+    },
+    "select": {
+      "current_screen": {
+        "name": "Current screen"
+      }
+    },
+    "sensor": {
+      "auto_off": {
+        "name": "Auto off"
+      },
+      "charge_app": {
+        "name": "IPX charge app"
+      },
+      "charge_bsp": {
+        "name": "IPX charge BSP"
+      },
+      "charge_ebx": {
+        "name": "IPX charge EBX"
+      },
+      "charge_period": {
+        "name": "IPX charge period"
+      },
+      "charge_rules": {
+        "name": "IPX charge rules"
+      },
+      "clock": {
+        "name": "IPX clock"
+      },
+      "cycle_app": {
+        "name": "IPX cycle app"
+      },
+      "cycle_ebx": {
+        "name": "IPX cycle EBX"
+      },
+      "cycle_period": {
+        "name": "IPX cycle period"
+      },
+      "cycle_rules": {
+        "name": "IPX cycle rules"
+      },
+      "delta_heap_free": {
+        "name": "Delta heap free"
+      },
+      "heap_free": {
+        "name": "Heap free"
+      },
+      "humidity": {
+        "name": "Humidity"
+      },
+      "luminance": {
+        "name": "Luminance"
+      },
+      "monitor_connections": {
+        "name": "Monitor connections"
+      },
+      "sensitive": {
+        "name": "Sensitive"
+      },
+      "temperature": {
+        "name": "Temperature"
+      }
+    },
+    "switch": {
+      "cooling_mode": {
+        "name": "Cooling mode"
+      },
+      "screen_lock": {
+        "name": "Screen lock"
+      },
+      "screen_state": {
+        "name": "Screen state"
+      },
+      "tempo_enable": {
+        "name": "Enable"
+      }
+    }
+  },
+  "exceptions": {
+    "cannot_connect": {
+      "message": "Error while communicating with the IPX800 V5: {error}"
+    },
+    "invalid_auth": {
+      "message": "The IPX800 V5 rejected the API key"
+    },
+    "invalid_auth_yaml": {
+      "message": "The IPX800 V5 rejected the API key: update it in configuration.yaml"
     }
   }
 }

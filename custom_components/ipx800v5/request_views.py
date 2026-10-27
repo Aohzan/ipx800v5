@@ -1,16 +1,22 @@
 """IPX800V5 request views to handle push information."""
 
-import logging
 from base64 import b64decode
 from hmac import compare_digest
 from http import HTTPStatus
+import logging
+from typing import TYPE_CHECKING
 
 from aiohttp import web
-from homeassistant.components.http import HomeAssistantView
+
+from homeassistant.components.http import KEY_HASS, HomeAssistantView
+from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_HOST
 from homeassistant.util import slugify
 
-from .const import CONF_PUSH_PASSWORD, COORDINATOR, DOMAIN, PUSH_USERNAME
+from .const import CONF_PUSH_PASSWORD, DOMAIN, PUSH_USERNAME
+
+if TYPE_CHECKING:
+    from .coordinator import IpxCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,34 +26,37 @@ def check_api_auth(request, host, push_password) -> bool:
     _LOGGER.debug(
         "Check API authentication from %s (expected %s)", request.remote, host
     )
-    try:
-        if request.remote != host:
-            raise ApiCallNotAuthorized("API call not coming from IPX800 IP.")
-        if "Authorization" not in request.headers:
-            raise ApiCallNotAuthorized("API call no authentication provided.")
-        header_auth = request.headers["Authorization"]
-        split = header_auth.strip().split(" ")
-        if len(split) != 2 or split[0].strip().lower() != "basic":
-            raise ApiCallNotAuthorized("Malformed Authorization header")
-        try:
-            username, password = b64decode(split[1]).decode().split(":", 1)
-        except ValueError as err:
-            raise ApiCallNotAuthorized("Malformed Authorization header") from err
-        if username != PUSH_USERNAME or not compare_digest(
-            password.encode(), push_password.encode()
-        ):
-            raise ApiCallNotAuthorized("API call authentication invalid.")
-    except ApiCallNotAuthorized as err:
-        _LOGGER.warning(err)
+    if (error := _api_auth_error(request, host, push_password)) is not None:
+        _LOGGER.warning(error)
         return False
     return True
+
+
+def _api_auth_error(request, host, push_password) -> str | None:
+    """Return why the API call isn't authorized, None if it is."""
+    if request.remote != host:
+        return "API call not coming from IPX800 IP."
+    if "Authorization" not in request.headers:
+        return "API call no authentication provided."
+    split = request.headers["Authorization"].strip().split(" ")
+    if len(split) != 2 or split[0].strip().lower() != "basic":
+        return "Malformed Authorization header"
+    try:
+        username, password = b64decode(split[1]).decode().split(":", 1)
+    except ValueError:
+        return "Malformed Authorization header"
+    if username != PUSH_USERNAME or not compare_digest(
+        password.encode(), push_password.encode()
+    ):
+        return "API call authentication invalid."
+    return None
 
 
 class IpxPushView(HomeAssistantView):
     """Base view for the push requests of an IPX800 config entry.
 
     Views can't be unregistered, so they are registered once and read the
-    config entry data on each request to follow its reloads.
+    config entry on each request to follow its reloads.
     """
 
     requires_auth = False
@@ -57,17 +66,23 @@ class IpxPushView(HomeAssistantView):
         self.entry_id = entry_id
         super().__init__()
 
-    def get_entry_data(self, request) -> dict | None:
-        """Return the entry data if the request is authorized, else None."""
-        entry_data = request.app["hass"].data.get(DOMAIN, {}).get(self.entry_id)
-        if entry_data is None or entry_data[CONF_PUSH_PASSWORD] is None:
+    def get_coordinator(self, request) -> IpxCoordinator | None:
+        """Return the coordinator of the entry if the request is authorized."""
+        entry = request.app[KEY_HASS].config_entries.async_get_entry(self.entry_id)
+        if (
+            entry is None
+            or entry.domain != DOMAIN
+            or entry.state is not ConfigEntryState.LOADED
+            or (push_password := entry.runtime_data.config.get(CONF_PUSH_PASSWORD))
+            is None
+        ):
             _LOGGER.warning("Push request for an IPX800 not loaded or without push")
             return None
         if not check_api_auth(
-            request, entry_data[CONF_HOST], entry_data[CONF_PUSH_PASSWORD]
+            request, entry.runtime_data.config[CONF_HOST], push_password
         ):
             return None
-        return entry_data
+        return entry.runtime_data
 
 
 class IpxRequestView(IpxPushView):
@@ -78,15 +93,15 @@ class IpxRequestView(IpxPushView):
     def __init__(self, entry_id: str, ipx_name: str) -> None:
         """Init the IPX view."""
         super().__init__(entry_id)
-        self.url = "/api/%s/{entity_id}/{state}" % slugify(ipx_name)
+        self.url = f"/api/{slugify(ipx_name)}/{{entity_id}}/{{state}}"
         _LOGGER.info("Dedicated push url for '%s': '%s'", ipx_name, self.url)
 
     async def get(self, request, entity_id, state):
         """Respond to requests from the device."""
-        if self.get_entry_data(request) is None:
+        if self.get_coordinator(request) is None:
             return web.Response(status=HTTPStatus.UNAUTHORIZED)
         _LOGGER.debug("State update pushed from IPX")
-        hass = request.app["hass"]
+        hass = request.app[KEY_HASS]
         old_state = hass.states.get(entity_id)
         _LOGGER.debug("Update %s to state %s", entity_id, state)
         if old_state:
@@ -104,15 +119,15 @@ class IpxRequestDataView(IpxPushView):
     def __init__(self, entry_id: str, ipx_name: str) -> None:
         """Init the IPX view."""
         super().__init__(entry_id)
-        self.url = "/api/%s_data/{data}" % slugify(ipx_name)
+        self.url = f"/api/{slugify(ipx_name)}_data/{{data}}"
         _LOGGER.info("Dedicated push data url for '%s': '%s'", ipx_name, self.url)
 
     async def get(self, request, data):
         """Respond to requests from the device."""
-        if self.get_entry_data(request) is None:
+        if self.get_coordinator(request) is None:
             return web.Response(status=HTTPStatus.UNAUTHORIZED)
         _LOGGER.debug("State update pushed from IPX")
-        hass = request.app["hass"]
+        hass = request.app[KEY_HASS]
         entities_data = data.split("&")
         for entity_data in entities_data:
             entity_id, separator, value = entity_data.partition("=")
@@ -144,12 +159,8 @@ class IpxRequestRefreshView(IpxPushView):
 
     async def get(self, request):
         """Respond to requests from the device."""
-        if (entry_data := self.get_entry_data(request)) is None:
+        if (coordinator := self.get_coordinator(request)) is None:
             return web.Response(status=HTTPStatus.UNAUTHORIZED)
         _LOGGER.debug("Update asked from IPX PUSH")
-        await entry_data[COORDINATOR].async_request_refresh()
+        await coordinator.async_request_refresh()
         return web.Response(status=HTTPStatus.OK, text="OK")
-
-
-class ApiCallNotAuthorized(Exception):
-    """API call for IPX800 view not authorized."""

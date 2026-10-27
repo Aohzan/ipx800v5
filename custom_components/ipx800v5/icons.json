@@ -1,0 +1,42 @@
+{
+  "entity": {
+    "number": {
+      "tempo_delay": {
+        "default": "mdi:clock-time-two"
+      }
+    },
+    "select": {
+      "current_screen": {
+        "default": "mdi:overscan"
+      }
+    },
+    "sensor": {
+      "auto_off": {
+        "default": "mdi:timer"
+      },
+      "sensitive": {
+        "default": "mdi:fingerprint"
+      }
+    },
+    "switch": {
+      "cooling_mode": {
+        "default": "mdi:snowflake"
+      },
+      "screen_lock": {
+        "default": "mdi:lock",
+        "state": {
+          "off": "mdi:lock-open-variant"
+        }
+      },
+      "screen_state": {
+        "default": "mdi:television",
+        "state": {
+          "off": "mdi:television-off"
+        }
+      },
+      "tempo_enable": {
+        "default": "mdi:toggle-switch"
+      }
+    }
+  }
+}

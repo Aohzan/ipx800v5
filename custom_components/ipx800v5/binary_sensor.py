@@ -2,15 +2,6 @@
 
 import logging
 
-from homeassistant.components.binary_sensor import (
-    BinarySensorDeviceClass,
-    BinarySensorEntity,
-)
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_TYPE
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from pypx800v5 import (
     EXT_X8D,
     EXT_X8R,
@@ -31,28 +22,32 @@ from pypx800v5 import (
     Thermostat,
 )
 
-from .const import (
-    CONF_DEVICES,
-    CONF_EXT_TYPE,
-    CONTROLLER,
-    COORDINATOR,
-    DOMAIN,
-    TYPE_IPX_OPTO,
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
 )
+from homeassistant.const import CONF_TYPE, Platform
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+from .const import CONF_EXT_TYPE, TYPE_IPX_OPTO
+from .coordinator import IpxConfigEntry, IpxCoordinator
 from .entity import IpxEntity
 
 _LOGGER = logging.getLogger(__name__)
 
+PARALLEL_UPDATES = 0
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: IpxConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the IPX800 sensors."""
-    controller = hass.data[DOMAIN][entry.entry_id][CONTROLLER]
-    coordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
-    devices = hass.data[DOMAIN][entry.entry_id][CONF_DEVICES]["binary_sensor"]
+    coordinator = entry.runtime_data
+    controller = coordinator.ipx
+    devices = coordinator.devices[Platform.BINARY_SENSOR]
 
     entities: list[BinarySensorEntity] = []
 
@@ -88,6 +83,7 @@ async def async_setup_entry(
                     ipx=controller,
                     id_name="io_out_id",
                     suffix_name="Success",
+                    translation_key="access_success",
                     device_class=BinarySensorDeviceClass.LOCK,
                 )
             )
@@ -98,6 +94,7 @@ async def async_setup_entry(
                     ipx=controller,
                     id_name="io_fault_id",
                     suffix_name="Fail",
+                    translation_key="access_fail",
                     device_class=BinarySensorDeviceClass.SAFETY,
                 )
             )
@@ -118,7 +115,7 @@ class IpxDigitalInputBinarySensor(IpxEntity, BinarySensorEntity):
     """Representation of a IPX digital input as a binary sensor."""
 
     def __init__(
-        self, device_config: dict, ipx: IPX800, coordinator: DataUpdateCoordinator
+        self, device_config: dict, ipx: IPX800, coordinator: IpxCoordinator
     ) -> None:
         """Initialize the digital input sensor of the IPX800."""
         super().__init__(device_config, ipx, coordinator)
@@ -134,7 +131,7 @@ class IpxOptoInputBinarySensor(IpxEntity, BinarySensorEntity):
     """Representation of a IPX Opto input as a binary sensor."""
 
     def __init__(
-        self, device_config: dict, ipx: IPX800, coordinator: DataUpdateCoordinator
+        self, device_config: dict, ipx: IPX800, coordinator: IpxCoordinator
     ) -> None:
         """Initialize the opto input sensor of the IPX800."""
         super().__init__(device_config, ipx, coordinator)
@@ -150,7 +147,7 @@ class X24DBinarySensor(IpxEntity, BinarySensorEntity):
     """Representation of a X24D digital input as a binary sensor."""
 
     def __init__(
-        self, device_config: dict, ipx: IPX800, coordinator: DataUpdateCoordinator
+        self, device_config: dict, ipx: IPX800, coordinator: IpxCoordinator
     ) -> None:
         """Initialize the digital input sensor of the X-24D."""
         super().__init__(device_config, ipx, coordinator)
@@ -166,7 +163,7 @@ class X8DBinarySensor(IpxEntity, BinarySensorEntity):
     """Representation of a X8D digital input as a binary sensor."""
 
     def __init__(
-        self, device_config: dict, ipx: IPX800, coordinator: DataUpdateCoordinator
+        self, device_config: dict, ipx: IPX800, coordinator: IpxCoordinator
     ) -> None:
         """Initialize the digital input sensor of the X-8D."""
         super().__init__(device_config, ipx, coordinator)
@@ -182,7 +179,7 @@ class TempoStateBinarySensor(IpxEntity, BinarySensorEntity):
     """Representation the tempo state as a binary sensor."""
 
     def __init__(
-        self, device_config: dict, ipx: IPX800, coordinator: DataUpdateCoordinator
+        self, device_config: dict, ipx: IPX800, coordinator: IpxCoordinator
     ) -> None:
         """Initialize the sensor of the tempo."""
         super().__init__(device_config, ipx, coordinator)
@@ -198,10 +195,16 @@ class X8RLongPushBinarySensor(IpxEntity, BinarySensorEntity):
     """Representation of a X8R long push as a binary sensor."""
 
     def __init__(
-        self, device_config: dict, ipx: IPX800, coordinator: DataUpdateCoordinator
+        self, device_config: dict, ipx: IPX800, coordinator: IpxCoordinator
     ) -> None:
         """Initialize the long push sensor of the X-8R."""
-        super().__init__(device_config, ipx, coordinator, suffix_name="Long Push")
+        super().__init__(
+            device_config,
+            ipx,
+            coordinator,
+            suffix_name="Long Push",
+            translation_key="long_push",
+        )
         self.control = X8R(ipx, self._ext_number, self._io_number)
 
     @property
@@ -214,10 +217,16 @@ class ThermostatFaultStateBinarySensor(IpxEntity, BinarySensorEntity):
     """Representation the thermostat error state as a binary sensor."""
 
     def __init__(
-        self, device_config: dict, ipx: IPX800, coordinator: DataUpdateCoordinator
+        self, device_config: dict, ipx: IPX800, coordinator: IpxCoordinator
     ) -> None:
         """Initialize the sensor of the tempo."""
-        super().__init__(device_config, ipx, coordinator, suffix_name="Fault")
+        super().__init__(
+            device_config,
+            ipx,
+            coordinator,
+            suffix_name="Fault",
+            translation_key="fault",
+        )
         self.control = Thermostat(ipx, self._ext_number)
         self._attr_device_class = BinarySensorDeviceClass.PROBLEM
 
@@ -234,13 +243,20 @@ class AccessControlBinarySensor(IpxEntity, BinarySensorEntity):
         self,
         device_config: dict,
         ipx: IPX800,
-        coordinator: DataUpdateCoordinator,
+        coordinator: IpxCoordinator,
         id_name: str,
         suffix_name: str,
+        translation_key: str,
         device_class: BinarySensorDeviceClass,
     ) -> None:
-        """Initialize the sensor of the tempo."""
-        super().__init__(device_config, ipx, coordinator, suffix_name)
+        """Initialize the sensor of the access control."""
+        super().__init__(
+            device_config,
+            ipx,
+            coordinator,
+            suffix_name=suffix_name,
+            translation_key=translation_key,
+        )
         self.control = AccessControl(ipx, self._ext_number)
         self._attr_device_class = device_class
         self._id_name = id_name

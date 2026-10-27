@@ -1,11 +1,18 @@
 """Constants for the ipx800v5 integration."""
 
+from typing import TYPE_CHECKING
+
+from homeassistant.const import Platform
+from homeassistant.util.hass_dict import HassKey
+
+if TYPE_CHECKING:
+    from .request_views import IpxPushView
+
 DOMAIN = "ipx800v5"
 
-CONTROLLER = "controller"
-COORDINATOR = "coordinator"
 PUSH_USERNAME = "ipx800"
-PUSH_VIEWS = f"{DOMAIN}_push_views"
+# Push views by URL, shared by the config entries: views can't be unregistered
+PUSH_VIEWS: HassKey[dict[str, IpxPushView]] = HassKey(f"{DOMAIN}_push_views")
 
 DEFAULT_IPX_NAME = "IPX800 V5"
 DEFAULT_SCAN_INTERVAL = 15
@@ -27,6 +34,8 @@ CONF_IO_NUMBER = "io_number"
 CONF_IO_NUMBERS = "io_numbers"
 CONF_MAX_TEMP = "max_temp"
 CONF_TARGET_TEMP_STEP = "target_temp_step"
+# Translation key of the entities built by the integration, not configurable
+CONF_TRANSLATION_KEY = "translation_key"
 
 DEFAULT_MIN_TEMP = 7
 DEFAULT_MAX_TEMP = 22
@@ -38,14 +47,31 @@ TYPE_IPX_OPTO = "opto"
 TYPE_XPWM_RGB = "xpwm_rgb"
 TYPE_XPWM_RGBW = "xpwm_rgbw"
 
+# Translation key of the diagnostic sensors, by analog name of the IPX800
+DIAG_SENSORS_TRANSLATION_KEYS = {
+    "anaIPXChargePeriod": "charge_period",
+    "anaIPXChargeApp": "charge_app",
+    "anaIPXChargeRules": "charge_rules",
+    "anaIPXChargeEbx": "charge_ebx",
+    "anaIPXChargeBsp": "charge_bsp",
+    "anaIPXCyclePeriod": "cycle_period",
+    "anaIPXCycleApp": "cycle_app",
+    "anaIPXCycleRules": "cycle_rules",
+    "anaIPXCycleEBX": "cycle_ebx",
+    "anaIPXClock": "clock",
+    "anaHeapFree": "heap_free",
+    "anaDeltaHeapFree": "delta_heap_free",
+    "anaMonitorConnections": "monitor_connections",
+}
+
 PLATFORMS = [
-    "binary_sensor",
-    "button",
-    "climate",
-    "cover",
-    "light",
-    "number",
-    "select",
-    "sensor",
-    "switch",
+    Platform.BINARY_SENSOR,
+    Platform.BUTTON,
+    Platform.CLIMATE,
+    Platform.COVER,
+    Platform.LIGHT,
+    Platform.NUMBER,
+    Platform.SELECT,
+    Platform.SENSOR,
+    Platform.SWITCH,
 ]

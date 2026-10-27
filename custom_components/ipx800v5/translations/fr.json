@@ -50,15 +50,31 @@
           "x8r_2_7": "X-8R N°3 - Type du relais 7",
           "x8r_2_8": "X-8R N°3 - Type du relais 8"
         }
+      },
+      "reauth_confirm": {
+        "title": "Authentification de l'IPX800 V5",
+        "description": "L'IPX800 V5 a refusé la clé API. Saisissez la nouvelle clé.",
+        "data": {
+          "api_key": "Clé API"
+        }
+      },
+      "reconfigure": {
+        "title": "Adresse de l'IPX800 V5",
+        "description": "Modifiez l'adresse de l'IPX800 V5.",
+        "data": {
+          "host": "IP",
+          "port": "Port"
+        }
       }
     },
     "error": {
-      "invalid_auth": "Problème d'autorisation, vérifiez la clé API",
       "cannot_connect": "Impossible de se connecter à l'IPX800, vérifier l'IP et le port",
+      "invalid_auth": "Problème d'autorisation, vérifiez la clé API",
       "unknown": "Erreur inconnue"
     },
     "abort": {
-      "already_configured": "L'IPX800 V5 avec cette adresse IP est déjà configuré"
+      "already_configured": "L'IPX800 V5 avec cette adresse IP est déjà configuré",
+      "yaml_entry": "Cet IPX800 V5 est configuré dans configuration.yaml : modifiez-le dans ce fichier"
     }
   },
   "options": {
@@ -108,6 +124,130 @@
     "error": {
       "invalid_auth": "Problème d'autorisation, vérifiez la clé API",
       "cannot_connect": "Impossible de se connecter à l'IPX800, vérifier l'IP et le port"
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "ac_power": {
+        "name": "Alimentation secteur"
+      },
+      "access_fail": {
+        "name": "Échec"
+      },
+      "access_success": {
+        "name": "Succès"
+      },
+      "fault": {
+        "name": "Défaut"
+      },
+      "long_push": {
+        "name": "Appui long"
+      }
+    },
+    "button": {
+      "reboot": {
+        "name": "Redémarrer"
+      }
+    },
+    "number": {
+      "comfort_temperature": {
+        "name": "Température confort"
+      },
+      "eco_temperature": {
+        "name": "Température éco"
+      },
+      "nofrost_temperature": {
+        "name": "Température hors-gel"
+      },
+      "tempo_delay": {
+        "name": "Délai"
+      }
+    },
+    "select": {
+      "current_screen": {
+        "name": "Écran actuel"
+      }
+    },
+    "sensor": {
+      "auto_off": {
+        "name": "Mise en veille automatique"
+      },
+      "charge_app": {
+        "name": "Charge IPX app"
+      },
+      "charge_bsp": {
+        "name": "Charge IPX BSP"
+      },
+      "charge_ebx": {
+        "name": "Charge IPX EBX"
+      },
+      "charge_period": {
+        "name": "Charge IPX période"
+      },
+      "charge_rules": {
+        "name": "Charge IPX règles"
+      },
+      "clock": {
+        "name": "Horloge IPX"
+      },
+      "cycle_app": {
+        "name": "Cycle IPX app"
+      },
+      "cycle_ebx": {
+        "name": "Cycle IPX EBX"
+      },
+      "cycle_period": {
+        "name": "Cycle IPX période"
+      },
+      "cycle_rules": {
+        "name": "Cycle IPX règles"
+      },
+      "delta_heap_free": {
+        "name": "Variation de la mémoire libre"
+      },
+      "heap_free": {
+        "name": "Mémoire libre"
+      },
+      "humidity": {
+        "name": "Humidité"
+      },
+      "luminance": {
+        "name": "Luminosité"
+      },
+      "monitor_connections": {
+        "name": "Connexions de supervision"
+      },
+      "sensitive": {
+        "name": "Sensibilité"
+      },
+      "temperature": {
+        "name": "Température"
+      }
+    },
+    "switch": {
+      "cooling_mode": {
+        "name": "Mode refroidissement"
+      },
+      "screen_lock": {
+        "name": "Verrouillage de l'écran"
+      },
+      "screen_state": {
+        "name": "État de l'écran"
+      },
+      "tempo_enable": {
+        "name": "Activation"
+      }
+    }
+  },
+  "exceptions": {
+    "cannot_connect": {
+      "message": "Erreur de communication avec l'IPX800 V5 : {error}"
+    },
+    "invalid_auth": {
+      "message": "L'IPX800 V5 a refusé la clé API"
+    },
+    "invalid_auth_yaml": {
+      "message": "L'IPX800 V5 a refusé la clé API : modifiez-la dans configuration.yaml"
     }
   }
 }

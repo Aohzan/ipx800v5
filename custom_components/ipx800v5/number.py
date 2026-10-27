@@ -2,12 +2,6 @@
 
 import logging
 
-from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberMode
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_TYPE, EntityCategory, UnitOfTemperature, UnitOfTime
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from pypx800v5 import (
     IPX800,
     OBJECT_COUNTER,
@@ -19,21 +13,35 @@ from pypx800v5 import (
     Thermostat,
 )
 
-from .const import CONF_DEVICES, CONF_EXT_TYPE, CONTROLLER, COORDINATOR, DOMAIN
+from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberMode
+from homeassistant.const import (
+    CONF_TYPE,
+    EntityCategory,
+    Platform,
+    UnitOfTemperature,
+    UnitOfTime,
+)
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+from .const import CONF_EXT_TYPE
+from .coordinator import IpxConfigEntry, IpxCoordinator
 from .entity import IpxEntity
 
 _LOGGER = logging.getLogger(__name__)
 
+PARALLEL_UPDATES = 0
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: IpxConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the IPX800 switches."""
-    controller = hass.data[DOMAIN][entry.entry_id][CONTROLLER]
-    coordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
-    devices = hass.data[DOMAIN][entry.entry_id][CONF_DEVICES]["number"]
+    coordinator = entry.runtime_data
+    controller = coordinator.ipx
+    devices = coordinator.devices[Platform.NUMBER]
 
     entities: list[NumberEntity] = []
 
@@ -83,7 +91,7 @@ class CounterNumber(IpxEntity, NumberEntity):
         self,
         device_config: dict,
         ipx: IPX800,
-        coordinator: DataUpdateCoordinator,
+        coordinator: IpxCoordinator,
     ) -> None:
         """Initialize the RelaySwitch."""
         super().__init__(device_config, ipx, coordinator)
@@ -120,12 +128,16 @@ class ThermostatParamNumber(IpxEntity, NumberEntity):
         self,
         device_config: dict,
         ipx: IPX800,
-        coordinator: DataUpdateCoordinator,
+        coordinator: IpxCoordinator,
         param: str,
     ) -> None:
         """Initialize the ThermostatParamNumber."""
         super().__init__(
-            device_config, ipx, coordinator, suffix_name=f"{param} Temperature"
+            device_config,
+            ipx,
+            coordinator,
+            suffix_name=f"{param} Temperature",
+            translation_key=f"{param.lower()}_temperature",
         )
         self.control = Thermostat(ipx, self._ext_number)
         self._param = param
@@ -157,16 +169,21 @@ class TempoDelayNumber(IpxEntity, NumberEntity):
     _attr_native_unit_of_measurement = UnitOfTime.SECONDS
     _attr_mode = NumberMode.BOX
     _attr_entity_category = EntityCategory.CONFIG
-    _attr_icon = "mdi:clock-time-two"
 
     def __init__(
         self,
         device_config: dict,
         ipx: IPX800,
-        coordinator: DataUpdateCoordinator,
+        coordinator: IpxCoordinator,
     ) -> None:
         """Initialize the entity."""
-        super().__init__(device_config, ipx, coordinator, suffix_name="Delay")
+        super().__init__(
+            device_config,
+            ipx,
+            coordinator,
+            suffix_name="Delay",
+            translation_key="tempo_delay",
+        )
         self.control = Tempo(ipx, self._ext_number)
 
     @property
