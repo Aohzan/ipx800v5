@@ -104,6 +104,10 @@
           "x8r_2_8": "X-8R N°3 - Type du relais 8"
         }
       }
+    },
+    "error": {
+      "invalid_auth": "Problème d'autorisation, vérifiez la clé API",
+      "cannot_connect": "Impossible de se connecter à l'IPX800, vérifier l'IP et le port"
     }
   }
 }

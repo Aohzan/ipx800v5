@@ -104,6 +104,10 @@
           "x8r_2_8": "X-8R N°3 - Relay 8 type"
         }
       }
+    },
+    "error": {
+      "invalid_auth": "Authentication error, check the API key",
+      "cannot_connect": "Cannot connect to the IPX800V5, check host and port"
     }
   }
 }

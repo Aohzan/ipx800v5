@@ -30,6 +30,7 @@ from pypx800v5 import (
     IPX800,
     IPX800CannotConnectError,
     IPX800InvalidAuthError,
+    IPX800RequestError,
 )
 from voluptuous.util import Upper
 
@@ -68,6 +69,7 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         """Initialize class variables."""
         self.base_config: dict[str, Any] = {}
+        self.params_schema: dict = {}
 
     async def async_step_import(self, import_info) -> ConfigFlowResult:
         """Import an advanced configuration from YAML config."""
@@ -79,7 +81,7 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     "The IPX800 V5 on %s is already configured from the UI. Delete it first if you want to configure it from configuration.yaml",
                     import_info[CONF_HOST],
                 )
-                return self.async_abort(reason="single_instance_allowed")
+                return self.async_abort(reason="already_configured")
             self.hass.config_entries.async_update_entry(entry, data=import_info)
             self._abort_if_unique_id_configured()
 
@@ -101,7 +103,8 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         session = async_get_clientsession(self.hass, False)
 
-        errors = await _test_connection(session, user_input)
+        # Read the IPX800 configuration here to show the errors in this step
+        schema, errors = await _async_get_param_schema(session, user_input, SOURCE_USER)
 
         if errors:
             return self.async_show_form(
@@ -109,17 +112,14 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
 
         self.base_config = user_input
+        self.params_schema = schema
         return await self.async_step_params()
 
     async def async_step_params(self, user_input=None) -> ConfigFlowResult:
         """Handle the param flow to customize according to device config."""
         if user_input is None:
-            session = async_get_clientsession(self.hass, False)
             return self.async_show_form(
-                step_id="params",
-                data_schema=vol.Schema(
-                    await _build_param_schema(session, self.base_config, SOURCE_USER)
-                ),
+                step_id="params", data_schema=vol.Schema(self.params_schema)
             )
 
         return self.async_create_entry(
@@ -137,44 +137,40 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class IpxOptionsFlowHandler(OptionsFlow):
     """Handle a IPX800 options flow."""
 
+    def __init__(self) -> None:
+        """Initialize the options flow."""
+        self.schema: dict | None = None
+
     async def async_step_init(self, user_input=None) -> ConfigFlowResult:
         """Manage the options."""
-        if user_input is None:
-            session = async_get_clientsession(self.hass, False)
-
-            schema = await _build_param_schema(
-                session, get_entry_config(self.config_entry), self.config_entry.source
+        if user_input is not None and self.schema is not None:
+            return self.async_create_entry(
+                data=config_organizer(user_input, self.config_entry.source)
             )
 
-            return self.async_show_form(
-                step_id="init",
-                data_schema=vol.Schema(schema),
-            )
-
-        return self.async_create_entry(
-            title=self.config_entry.data[CONF_HOST],
-            data=config_organizer(user_input, self.config_entry.source),
+        # Without the IPX800 configuration, the form only shows the error and
+        # submitting it tries again
+        session = async_get_clientsession(self.hass, False)
+        schema, errors = await _async_get_param_schema(
+            session, get_entry_config(self.config_entry), self.config_entry.source
+        )
+        if not errors:
+            self.schema = schema
+        return self.async_show_form(
+            step_id="init", data_schema=vol.Schema(schema), errors=errors
         )
 
 
-async def _test_connection(session: ClientSession, base_config: dict) -> dict[str, str]:
-    errors = {}
-
-    controller = IPX800(
-        host=base_config[CONF_HOST],
-        port=base_config[CONF_PORT],
-        api_key=base_config[CONF_API_KEY],
-        session=session,
-    )
-
+async def _async_get_param_schema(
+    session: ClientSession, config: dict, entry_source: str
+) -> tuple[dict, dict[str, str]]:
+    """Return the params schema, or the errors when the IPX800 can't be read."""
     try:
-        await controller.ping()
+        return await _build_param_schema(session, config, entry_source), {}
     except IPX800InvalidAuthError:
-        errors["base"] = "invalid_auth"
-    except IPX800CannotConnectError:
-        errors["base"] = "cannot_connect"
-
-    return errors
+        return {}, {"base": "invalid_auth"}
+    except IPX800CannotConnectError, IPX800RequestError:
+        return {}, {"base": "cannot_connect"}
 
 
 async def _build_param_schema(
@@ -272,23 +268,21 @@ async def _build_param_schema(
 
 def config_organizer(user_input, entry_source):
     """Organize params input to options, with devices config as a yaml-like list."""
+    user_input = dict(user_input)
     config = {}
 
     # For user and yaml entry
-    config[CONF_SCAN_INTERVAL] = user_input[CONF_SCAN_INTERVAL]
-    user_input.pop(CONF_SCAN_INTERVAL)
+    config[CONF_SCAN_INTERVAL] = user_input.pop(CONF_SCAN_INTERVAL)
 
     # Only for user entry, devices of yaml entries come from configuration.yaml
     if entry_source != SOURCE_USER:
         return config
 
     if CONF_API_KEY in user_input:
-        config[CONF_API_KEY] = user_input[CONF_API_KEY]
-        user_input.pop(CONF_API_KEY)
+        config[CONF_API_KEY] = user_input.pop(CONF_API_KEY)
 
     if CONF_PUSH_PASSWORD in user_input:
-        config[CONF_PUSH_PASSWORD] = user_input[CONF_PUSH_PASSWORD]
-        user_input.pop(CONF_PUSH_PASSWORD)
+        config[CONF_PUSH_PASSWORD] = user_input.pop(CONF_PUSH_PASSWORD)
 
     config[CONF_DEVICES] = []
     for device_config in user_input.items():
