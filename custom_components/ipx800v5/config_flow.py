@@ -272,6 +272,9 @@ async def _async_get_param_schema(
         return {}, {"base": "invalid_auth"}
     except IPX800CannotConnectError, IPX800RequestError:
         return {}, {"base": "cannot_connect"}
+    except Exception:
+        _LOGGER.exception("Unexpected error while reading the IPX800 configuration")
+        return {}, {"base": "unknown"}
 
 
 async def _build_param_schema(

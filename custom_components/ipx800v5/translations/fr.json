@@ -123,7 +123,8 @@
     },
     "error": {
       "invalid_auth": "Problème d'autorisation, vérifiez la clé API",
-      "cannot_connect": "Impossible de se connecter à l'IPX800, vérifier l'IP et le port"
+      "cannot_connect": "Impossible de se connecter à l'IPX800, vérifier l'IP et le port",
+      "unknown": "Erreur inconnue"
     }
   },
   "entity": {

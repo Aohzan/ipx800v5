@@ -93,6 +93,7 @@ async def test_user_flow(hass: HomeAssistant, mock_ipx: FakeIpxApi) -> None:
         (IPX800CannotConnectError, "cannot_connect"),
         (IPX800RequestError, "cannot_connect"),
         (IPX800InvalidAuthError, "invalid_auth"),
+        (RuntimeError, "unknown"),
     ],
 )
 async def test_user_flow_errors(
@@ -173,18 +174,29 @@ async def test_options_flow(
     assert hass.states.get("light.ipx800_v5_ipx_ndeg0_relais_1") is not None
 
 
-async def test_options_flow_cannot_connect(
-    hass: HomeAssistant, mock_config_entry: MockConfigEntry, mock_ipx: FakeIpxApi
+@pytest.mark.parametrize(
+    ("exception", "error"),
+    [
+        (IPX800CannotConnectError, "cannot_connect"),
+        (RuntimeError, "unknown"),
+    ],
+)
+async def test_options_flow_errors(
+    hass: HomeAssistant,
+    mock_config_entry: MockConfigEntry,
+    mock_ipx: FakeIpxApi,
+    exception: type[Exception],
+    error: str,
 ) -> None:
     """Test the options show an error when the IPX800 can't be read."""
     mock_config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(mock_config_entry.entry_id)
     await hass.async_block_till_done()
 
-    mock_ipx.error = IPX800CannotConnectError()
+    mock_ipx.error = exception()
     result = await hass.config_entries.options.async_init(mock_config_entry.entry_id)
     assert result["type"] is FlowResultType.FORM
-    assert result["errors"] == {"base": "cannot_connect"}
+    assert result["errors"] == {"base": error}
 
     # Submitting the form tries again
     mock_ipx.error = None
