@@ -81,6 +81,46 @@ async def test_push_refresh(
     assert response.status == HTTPStatus.OK
 
 
+async def test_push_state_after_reload(
+    hass: HomeAssistant,
+    hass_client_no_auth: ClientSessionGenerator,
+    push_entry: MockConfigEntry,
+) -> None:
+    """Test the pushed states update the entities created by a reload."""
+    assert await hass.config_entries.async_reload(push_entry.entry_id)
+    await hass.async_block_till_done()
+    client = await hass_client_no_auth()
+    entity_id = "switch.ipx800_v5_relais_3"
+
+    response = await client.get(f"/api/ipx800_v5/{entity_id}/off", headers=_auth())
+    assert response.status == HTTPStatus.OK
+    assert hass.states.get(entity_id).state == "off"
+
+    response = await client.get(f"/api/ipx800_v5_data/{entity_id}=1", headers=_auth())
+    assert response.status == HTTPStatus.OK
+    assert hass.states.get(entity_id).state == "on"
+
+
+async def test_push_state_new_entry(
+    hass: HomeAssistant,
+    hass_client_no_auth: ClientSessionGenerator,
+    push_entry: MockConfigEntry,
+) -> None:
+    """Test the push requests follow an entry created again."""
+    await hass.config_entries.async_remove(push_entry.entry_id)
+    await hass.async_block_till_done()
+    entry = MockConfigEntry(domain=DOMAIN, data=push_entry.data)
+    entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    client = await hass_client_no_auth()
+    entity_id = "switch.ipx800_v5_relais_3"
+
+    response = await client.get(f"/api/ipx800_v5/{entity_id}/off", headers=_auth())
+    assert response.status == HTTPStatus.OK
+    assert hass.states.get(entity_id).state == "off"
+
+
 @pytest.mark.parametrize(
     "headers",
     [
