@@ -74,7 +74,8 @@
     },
     "abort": {
       "already_configured": "An IPX800 V5 with this IP already exists",
-      "yaml_entry": "This IPX800 V5 is configured in configuration.yaml: update it in this file"
+      "yaml_entry": "This IPX800 V5 is configured in configuration.yaml: update it in this file",
+      "wrong_device": "The IPX800 V5 at this address is not the configured one (other MAC address)"
     }
   },
   "options": {

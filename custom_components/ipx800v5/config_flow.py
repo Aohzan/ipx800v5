@@ -34,8 +34,15 @@ from homeassistant.const import (
     CONF_PORT,
     CONF_SCAN_INTERVAL,
 )
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.device_registry import (
+    CONNECTION_NETWORK_MAC,
+    async_entries_for_config_entry,
+    async_get as async_get_device_registry,
+    format_mac,
+)
+from homeassistant.helpers.typing import UNDEFINED
 
 from .const import (
     CONF_COMPONENT,
@@ -182,14 +189,23 @@ class IpxConfigFlow(ConfigFlow, domain=DOMAIN):
             if unique_id != entry.unique_id:
                 await self.async_set_unique_id(unique_id)
                 self._abort_if_unique_id_configured()
-            errors = await _test_connection(
+            errors, mac_address = await _test_connection(
                 async_get_clientsession(self.hass, verify_ssl=False), new_config
             )
             if not errors:
+                configured_mac_address = _configured_mac_address(self.hass, entry)
+                if configured_mac_address not in (None, format_mac(mac_address)):
+                    # Its entities would be created again, the old ones
+                    # left orphaned
+                    return self.async_abort(reason="wrong_device")
                 # An API key changed here replaces the one of the options
                 return self.async_update_reload_and_abort(
                     entry,
                     unique_id=unique_id,
+                    # The default title is the host
+                    title=new_config[CONF_HOST]
+                    if entry.title == config[CONF_HOST]
+                    else UNDEFINED,
                     data_updates=user_input,
                     options={
                         key: value
@@ -239,8 +255,21 @@ class IpxOptionsFlowHandler(OptionsFlowWithReload):
         )
 
 
-async def _test_connection(session: ClientSession, config: dict) -> dict[str, str]:
-    """Return the errors of a request to the IPX800."""
+def _configured_mac_address(hass: HomeAssistant, entry: IpxConfigEntry) -> str | None:
+    """Return the MAC address of the IPX800 of an entry, None before its setup."""
+    for device in async_entries_for_config_entry(
+        async_get_device_registry(hass), entry.entry_id
+    ):
+        for connection_type, mac_address in device.connections:
+            if connection_type == CONNECTION_NETWORK_MAC:
+                return mac_address
+    return None
+
+
+async def _test_connection(
+    session: ClientSession, config: dict
+) -> tuple[dict[str, str], str]:
+    """Return the errors of requests to the IPX800, and its MAC address."""
     controller = IPX800(
         host=config[CONF_HOST],
         port=config[CONF_PORT],
@@ -249,14 +278,15 @@ async def _test_connection(session: ClientSession, config: dict) -> dict[str, st
     )
     try:
         await controller.ping()
+        await controller.update_ipx_info()
     except IPX800InvalidAuthError:
-        return {"base": "invalid_auth"}
+        return {"base": "invalid_auth"}, ""
     except IPX800CannotConnectError, IPX800RequestError:
-        return {"base": "cannot_connect"}
+        return {"base": "cannot_connect"}, ""
     except Exception:
         _LOGGER.exception("Unexpected error while connecting to the IPX800")
-        return {"base": "unknown"}
-    return {}
+        return {"base": "unknown"}, ""
+    return {}, controller.mac_address
 
 
 async def _async_get_param_schema(
