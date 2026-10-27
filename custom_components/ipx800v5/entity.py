@@ -1,7 +1,7 @@
 """Represent the IPX800V5 base entity."""
 
+import probatio
 from pypx800v5 import EXTENSIONS, IPX, IPX800
-from voluptuous.util import Upper
 
 from homeassistant.const import (
     CONF_DEVICE_CLASS,
@@ -131,7 +131,7 @@ class IpxEntity(CoordinatorEntity[IpxCoordinator]):
         configuration_url = f"http://{self.ipx.host}:{self.ipx.port}/"
 
         device_model = (
-            Upper(self._ext_type[:1] + "-" + self._ext_type[1:])
+            probatio.Upper(self._ext_type[:1] + "-" + self._ext_type[1:])
             if self._ext_type in EXTENSIONS
             else "IPX800 V5"
         )
@@ -148,7 +148,7 @@ class IpxEntity(CoordinatorEntity[IpxCoordinator]):
             )
         else:
             device_name = device_name or device_config.get(
-                CONF_EXT_NAME, f"{Upper(self._ext_type)} N°{self._ext_number}"
+                CONF_EXT_NAME, f"{probatio.Upper(self._ext_type)} N°{self._ext_number}"
             )
             self._attr_device_info = DeviceInfo(
                 identifiers={

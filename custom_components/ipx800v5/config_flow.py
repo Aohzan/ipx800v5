@@ -6,6 +6,7 @@ import logging
 from typing import Any
 
 from aiohttp import ClientSession
+import probatio
 from pypx800v5 import (
     API_CONFIG_NAME,
     EXT_X8R,
@@ -15,8 +16,6 @@ from pypx800v5 import (
     IPX800InvalidAuthError,
     IPX800RequestError,
 )
-import voluptuous as vol
-from voluptuous.util import Upper
 
 from homeassistant.config_entries import (
     SOURCE_IMPORT,
@@ -60,19 +59,19 @@ from .helpers import get_device_in_devices_config, get_entry_config
 
 _LOGGER = logging.getLogger(__name__)
 
-BASE_SCHEMA = vol.Schema(
+BASE_SCHEMA = probatio.Schema(
     {
-        vol.Required(CONF_NAME, default=DEFAULT_IPX_NAME): str,
-        vol.Required(CONF_HOST): str,
-        vol.Required(CONF_PORT, default=80): int,
-        vol.Required(CONF_API_KEY): str,
+        probatio.Required(CONF_NAME, default=DEFAULT_IPX_NAME): str,
+        probatio.Required(CONF_HOST): str,
+        probatio.Required(CONF_PORT, default=80): int,
+        probatio.Required(CONF_API_KEY): str,
     }
 )
-REAUTH_SCHEMA = vol.Schema({vol.Required(CONF_API_KEY): str})
-RECONFIGURE_SCHEMA = vol.Schema(
+REAUTH_SCHEMA = probatio.Schema({probatio.Required(CONF_API_KEY): str})
+RECONFIGURE_SCHEMA = probatio.Schema(
     {
-        vol.Required(CONF_HOST): str,
-        vol.Required(CONF_PORT): int,
+        probatio.Required(CONF_HOST): str,
+        probatio.Required(CONF_PORT): int,
     }
 )
 
@@ -139,7 +138,7 @@ class IpxConfigFlow(ConfigFlow, domain=DOMAIN):
         """Handle the param flow to customize according to device config."""
         if user_input is None:
             return self.async_show_form(
-                step_id="params", data_schema=vol.Schema(self.params_schema)
+                step_id="params", data_schema=probatio.Schema(self.params_schema)
             )
 
         return self.async_create_entry(
@@ -170,7 +169,7 @@ class IpxConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def _async_step_update_entry(
-        self, step_id: str, schema: vol.Schema, user_input: dict[str, Any] | None
+        self, step_id: str, schema: probatio.Schema, user_input: dict[str, Any] | None
     ) -> ConfigFlowResult:
         """Update the connection settings of the entry after testing them."""
         if self.source == SOURCE_REAUTH:
@@ -251,7 +250,7 @@ class IpxOptionsFlowHandler(OptionsFlowWithReload):
         if not errors:
             self.schema = schema
         return self.async_show_form(
-            step_id="init", data_schema=vol.Schema(schema), errors=errors
+            step_id="init", data_schema=probatio.Schema(schema), errors=errors
         )
 
 
@@ -312,7 +311,7 @@ async def _build_param_schema(
     """Build schema for params and options flow according to the IPX800 config."""
     # options for ui and yaml entry
     schema = {
-        vol.Required(
+        probatio.Required(
             CONF_SCAN_INTERVAL,
             default=config.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
         ): int,
@@ -324,11 +323,11 @@ async def _build_param_schema(
         devices_config = config.get(CONF_DEVICES, {})
         schema.update(
             {
-                vol.Required(
+                probatio.Required(
                     CONF_API_KEY,
                     default=config.get(CONF_API_KEY),
                 ): str,
-                vol.Optional(
+                probatio.Optional(
                     CONF_PUSH_PASSWORD,
                     default=config.get(CONF_PUSH_PASSWORD, ""),
                 ): str,
@@ -358,10 +357,12 @@ async def _build_param_schema(
             )
             schema.update(
                 {
-                    vol.Required(
+                    probatio.Required(
                         f"ipx_0_{i + 1}",
                         default=device.get(CONF_COMPONENT, "switch"),
-                    ): vol.All(str, vol.Lower, vol.In(["switch", "light"])),
+                    ): probatio.All(
+                        str, probatio.Lower, probatio.In(["switch", "light"])
+                    ),
                 }
             )
 
@@ -385,11 +386,15 @@ async def _build_param_schema(
                         )
                         schema.update(
                             {
-                                vol.Required(
+                                probatio.Required(
                                     f"{ext_type}_{ext_number}_{i + 1}",
                                     description=f"{extension[API_CONFIG_NAME]} N°{i}",
                                     default=device.get(CONF_COMPONENT, "switch"),
-                                ): vol.All(str, vol.Lower, vol.In(["switch", "light"])),
+                                ): probatio.All(
+                                    str,
+                                    probatio.Lower,
+                                    probatio.In(["switch", "light"]),
+                                ),
                             }
                         )
                 ext_number += 1  # noqa: SIM113
@@ -420,10 +425,10 @@ def config_organizer(user_input, entry_source):
         ident = device_config[0].split("_")
         config[CONF_DEVICES].append(
             {
-                CONF_NAME: f"{Upper(ident[0])} N°{ident[1]} Relais {ident[2]}",
+                CONF_NAME: f"{probatio.Upper(ident[0])} N°{ident[1]} Relais {ident[2]}",
                 CONF_EXT_TYPE: str(ident[0]),
                 CONF_EXT_NUMBER: int(ident[1]),
-                CONF_EXT_NAME: f"{Upper(ident[0])} N°{ident[1]}",
+                CONF_EXT_NAME: f"{probatio.Upper(ident[0])} N°{ident[1]}",
                 CONF_IO_NUMBER: int(ident[2]),
                 CONF_COMPONENT: str(device_config[1]),
             }
