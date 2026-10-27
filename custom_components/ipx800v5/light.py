@@ -1,21 +1,9 @@
 """Support for IPX800 V5 lights."""
 
-import logging
 from asyncio import gather as async_gather
+import logging
 from typing import Any
 
-from homeassistant.components.light import (
-    ATTR_BRIGHTNESS,
-    ATTR_RGB_COLOR,
-    ATTR_RGBW_COLOR,
-    ColorMode,
-    LightEntity,
-)
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_TYPE
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from pypx800v5 import (
     EXT_X010V,
     EXT_X8R,
@@ -30,21 +18,31 @@ from pypx800v5 import (
     XDimmer,
 )
 
+from homeassistant.components.light import (
+    ATTR_BRIGHTNESS,
+    ATTR_RGB_COLOR,
+    ATTR_RGBW_COLOR,
+    ColorMode,
+    LightEntity,
+)
+from homeassistant.const import CONF_TYPE, Platform
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
 from .const import (
     CONF_DEFAULT_BRIGHTNESS,
-    CONF_DEVICES,
     CONF_EXT_TYPE,
     CONF_TRANSITION,
-    CONTROLLER,
-    COORDINATOR,
     DEFAULT_TRANSITION,
-    DOMAIN,
     TYPE_XPWM_RGB,
     TYPE_XPWM_RGBW,
 )
+from .coordinator import IpxConfigEntry, IpxCoordinator
 from .entity import IpxEntity
 
 _LOGGER = logging.getLogger(__name__)
+
+PARALLEL_UPDATES = 0
 
 
 def scalefrom100to255(value):
@@ -59,13 +57,13 @@ def scaleto100(value):
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: IpxConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the IPX800 lights."""
-    controller = hass.data[DOMAIN][entry.entry_id][CONTROLLER]
-    coordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
-    devices = hass.data[DOMAIN][entry.entry_id][CONF_DEVICES]["light"]
+    coordinator = entry.runtime_data
+    controller = coordinator.ipx
+    devices = coordinator.devices[Platform.LIGHT]
 
     entities: list[LightEntity] = []
 
@@ -103,11 +101,11 @@ class IpxLight(IpxEntity, LightEntity):
         self,
         device_config: dict,
         ipx: IPX800,
-        coordinator: DataUpdateCoordinator,
+        coordinator: IpxCoordinator,
     ) -> None:
         """Initialize the RelayLight."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = IPX800Relay(ipx, self._io_number)
+        self.control = IPX800Relay(ipx, self.io_number)
 
     @property
     def is_on(self) -> bool:
@@ -140,11 +138,11 @@ class X8RLight(IpxEntity, LightEntity):
         self,
         device_config: dict,
         ipx: IPX800,
-        coordinator: DataUpdateCoordinator,
+        coordinator: IpxCoordinator,
     ) -> None:
         """Initialize the RelayLight."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = X8R(ipx, self._ext_number, self._io_number)
+        self.control = X8R(ipx, self._ext_number, self.io_number)
 
     @property
     def is_on(self) -> bool:
@@ -177,11 +175,11 @@ class XDimmerLight(IpxEntity, LightEntity):
         self,
         device_config: dict,
         ipx: IPX800,
-        coordinator: DataUpdateCoordinator,
+        coordinator: IpxCoordinator,
     ) -> None:
         """Initialize the class XDimmerLight."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = XDimmer(ipx, self._ext_number, self._io_number)
+        self.control = XDimmer(ipx, self._ext_number, self.io_number)
         self._transition = device_config.get(CONF_TRANSITION, DEFAULT_TRANSITION)
 
     @property
@@ -227,11 +225,11 @@ class XPWMLight(IpxEntity, LightEntity):
         self,
         device_config: dict,
         ipx: IPX800,
-        coordinator: DataUpdateCoordinator,
+        coordinator: IpxCoordinator,
     ) -> None:
         """Initialize the XPWMLight."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = XPWM(ipx, self._ext_number, self._io_number)
+        self.control = XPWM(ipx, self._ext_number, self.io_number)
 
         self._default_brightness = scaleto100(
             device_config.get(CONF_DEFAULT_BRIGHTNESS, 255)
@@ -281,7 +279,7 @@ class XPWMRGBLight(IpxEntity, LightEntity):
         self,
         device_config: dict,
         ipx: IPX800,
-        coordinator: DataUpdateCoordinator,
+        coordinator: IpxCoordinator,
     ) -> None:
         """Initialize the XPWMRGBLight."""
         super().__init__(device_config, ipx, coordinator)
@@ -402,7 +400,7 @@ class XPWMRGBWLight(IpxEntity, LightEntity):
         self,
         device_config: dict,
         ipx: IPX800,
-        coordinator: DataUpdateCoordinator,
+        coordinator: IpxCoordinator,
     ) -> None:
         """Initialize the XPWMRGBWLight."""
         super().__init__(device_config, ipx, coordinator)
@@ -515,11 +513,11 @@ class X010VLight(IpxEntity, LightEntity):
         self,
         device_config: dict,
         ipx: IPX800,
-        coordinator: DataUpdateCoordinator,
+        coordinator: IpxCoordinator,
     ) -> None:
         """Initialize the class XDimmerLight."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = X010V(ipx, self._ext_number, self._io_number)
+        self.control = X010V(ipx, self._ext_number, self.io_number)
 
     @property
     def is_on(self) -> bool:

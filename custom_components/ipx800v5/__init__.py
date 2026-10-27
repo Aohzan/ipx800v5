@@ -1,11 +1,10 @@
 """Support for the GCE IPX800 V5."""
 
 import logging
-from datetime import timedelta
 
-import homeassistant.helpers.config_validation as cv
-import voluptuous as vol
-from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
+import probatio
+
+from homeassistant.config_entries import SOURCE_IMPORT
 from homeassistant.const import (
     CONF_API_KEY,
     CONF_DEVICE_CLASS,
@@ -14,14 +13,11 @@ from homeassistant.const import (
     CONF_ID,
     CONF_NAME,
     CONF_PORT,
-    CONF_SCAN_INTERVAL,
     CONF_TYPE,
     CONF_UNIT_OF_MEASUREMENT,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.debounce import Debouncer
+import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.device_registry import (
     CONNECTION_NETWORK_MAC,
     DeviceEntry,
@@ -34,85 +30,65 @@ from homeassistant.helpers.entity_registry import (
     async_get as async_get_entity_registry,
 )
 from homeassistant.helpers.typing import ConfigType
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from pypx800v5 import (
-    IPX800,
-    OBJECT_ACCESS_CONTROL,
-    AccessControl,
-    IPX800CannotConnectError,
-    IPX800InvalidAuthError,
-    IPX800RequestError,
-)
 
 from .const import (
     CONF_COMPONENT,
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEVICES,
     CONF_DEVICES_AUTO,
-    CONF_DIAG_SENSORS,
     CONF_EXT_NUMBER,
     CONF_EXT_TYPE,
     CONF_IO_NUMBER,
     CONF_IO_NUMBERS,
     CONF_PUSH_PASSWORD,
     CONF_TRANSITION,
-    CONTROLLER,
-    COORDINATOR,
-    DEFAULT_SCAN_INTERVAL,
     DEFAULT_TRANSITION,
     DOMAIN,
     PLATFORMS,
     PUSH_VIEWS,
-    REQUEST_REFRESH_DELAY,
 )
-from .helpers import (
-    build_extensions_entities,
-    build_ipx_entities,
-    build_ipx_system_entities,
-    build_objects_entities,
-    filter_entities_by_platform,
-    get_entry_config,
-    remove_duplicate_entities,
-)
+from .coordinator import IpxConfigEntry, IpxCoordinator
 from .request_views import IpxRequestDataView, IpxRequestRefreshView, IpxRequestView
 
 _LOGGER = logging.getLogger(__name__)
 
-IPX800_DEVICES_SCHEMA = vol.Schema(
+IPX800_DEVICES_SCHEMA = probatio.Schema(
     {
-        vol.Required(CONF_NAME): cv.string,
-        vol.Required(CONF_COMPONENT): cv.string,
-        vol.Required(CONF_EXT_TYPE): cv.string,
-        vol.Optional(CONF_EXT_NUMBER, default=0): cv.positive_int,
-        vol.Optional(CONF_TYPE): cv.string,
-        vol.Optional(CONF_IO_NUMBER): cv.positive_int,
-        vol.Optional(CONF_IO_NUMBERS): cv.ensure_list,
-        vol.Optional(CONF_DEFAULT_BRIGHTNESS): cv.positive_int,
-        vol.Optional(CONF_ID): cv.positive_int,
-        vol.Optional(CONF_ICON): cv.icon,
-        vol.Optional(CONF_TRANSITION, default=DEFAULT_TRANSITION): vol.Coerce(float),
-        vol.Optional(CONF_DEVICE_CLASS): cv.string,
-        vol.Optional(CONF_UNIT_OF_MEASUREMENT): cv.string,
+        probatio.Required(CONF_NAME): cv.string,
+        probatio.Required(CONF_COMPONENT): cv.string,
+        probatio.Required(CONF_EXT_TYPE): cv.string,
+        probatio.Optional(CONF_EXT_NUMBER, default=0): cv.positive_int,
+        probatio.Optional(CONF_TYPE): cv.string,
+        probatio.Optional(CONF_IO_NUMBER): cv.positive_int,
+        probatio.Optional(CONF_IO_NUMBERS): cv.ensure_list,
+        probatio.Optional(CONF_DEFAULT_BRIGHTNESS): cv.positive_int,
+        probatio.Optional(CONF_ID): cv.positive_int,
+        probatio.Optional(CONF_ICON): cv.icon,
+        probatio.Optional(CONF_TRANSITION, default=DEFAULT_TRANSITION): probatio.Coerce(
+            float
+        ),
+        probatio.Optional(CONF_DEVICE_CLASS): cv.string,
+        probatio.Optional(CONF_UNIT_OF_MEASUREMENT): cv.string,
     }
 )
 
-IPX800_SCHEMA = vol.Schema(
+IPX800_SCHEMA = probatio.Schema(
     {
-        vol.Required(CONF_NAME): cv.string,
-        vol.Required(CONF_HOST): cv.string,
-        vol.Optional(CONF_PORT, default=80): cv.port,
-        vol.Required(CONF_API_KEY): cv.string,
-        vol.Optional(CONF_DEVICES_AUTO, default=[]): cv.ensure_list,
-        vol.Optional(CONF_DEVICES, default=[]): vol.All(
+        probatio.Required(CONF_NAME): cv.string,
+        probatio.Required(CONF_HOST): cv.string,
+        probatio.Optional(CONF_PORT, default=80): cv.port,
+        probatio.Required(CONF_API_KEY): cv.string,
+        probatio.Optional(CONF_DEVICES_AUTO, default=[]): cv.ensure_list,
+        probatio.Optional(CONF_DEVICES, default=[]): probatio.All(
             cv.ensure_list, [IPX800_DEVICES_SCHEMA]
         ),
     },
-    extra=vol.ALLOW_EXTRA,
+    extra=probatio.ALLOW_EXTRA,
 )
 
-CONFIG_SCHEMA = vol.Schema(
-    {DOMAIN: vol.All(cv.ensure_list, [IPX800_SCHEMA])},
-    extra=vol.ALLOW_EXTRA,
+CONFIG_SCHEMA = probatio.Schema(
+    {DOMAIN: probatio.All(cv.ensure_list, [IPX800_SCHEMA])},
+    extra=probatio.ALLOW_EXTRA,
 )
 
 
@@ -129,108 +105,14 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     return True
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: IpxConfigEntry) -> bool:
     """Set up the IPX800v5."""
-    hass.data.setdefault(DOMAIN, {})
-
-    config = get_entry_config(entry)
-
-    session = async_get_clientsession(hass, False)
-
-    ipx = IPX800(
-        host=config[CONF_HOST],
-        port=config[CONF_PORT],
-        api_key=config[CONF_API_KEY],
-        session=session,
-    )
-
-    try:
-        await ipx.ping()
-    except IPX800CannotConnectError as exception:
-        _LOGGER.error(
-            "Cannot connect to the %s IPX800 V5, check host and port",
-            config[CONF_HOST],
-        )
-        raise ConfigEntryNotReady from exception
-    except IPX800InvalidAuthError:
-        _LOGGER.error("Authentication error, check API Key")
-        return False
-
-    try:
-        await ipx.init_config()
-    except (IPX800CannotConnectError, IPX800RequestError) as exception:
-        raise ConfigEntryNotReady(
-            f"Cannot get the configuration of the {config[CONF_HOST]} IPX800 V5"
-        ) from exception
-
-    # build list of entities according to the configuration and discovered extensions and objects
-    auto_entities = []
-    auto_entities.extend(
-        build_ipx_entities(
-            entry.source, config[CONF_DEVICES], config.get(CONF_DEVICES_AUTO, [])
-        )
-    )
-    auto_entities.extend(
-        build_ipx_system_entities(ipx, config.get(CONF_DIAG_SENSORS, False))
-    )
-    auto_entities.extend(
-        build_extensions_entities(
-            entry.source, ipx, config[CONF_DEVICES], config.get(CONF_DEVICES_AUTO, [])
-        )
-    )
-    auto_entities.extend(
-        build_objects_entities(
-            entry.source, ipx, config[CONF_DEVICES], config.get(CONF_DEVICES_AUTO, [])
-        )
-    )
-    entities = list(config[CONF_DEVICES])
-    entities.extend(remove_duplicate_entities(auto_entities, config[CONF_DEVICES]))
-
-    # Text values are not part of the global io/ana states, poll the ones used
-    str_ids = [
-        AccessControl(ipx, device[CONF_EXT_NUMBER]).str_last_code_id
-        for device in filter_entities_by_platform(entities, "sensor")
-        if device[CONF_EXT_TYPE] == OBJECT_ACCESS_CONTROL
-    ]
-
-    async def async_update_data():
-        """Fetch data from API."""
-        try:
-            data = await ipx.global_get()
-            for str_id in str_ids:
-                data[str_id] = {"_id": str_id, "value": await ipx.get_str(str_id)}
-            return data
-        except IPX800InvalidAuthError as err:
-            raise UpdateFailed("Authentication error on IPX800") from err
-        except (IPX800CannotConnectError, IPX800RequestError) as err:
-            raise UpdateFailed(f"Failed to communicating with API: {err}") from err
-
-    scan_interval = config.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
-
-    if scan_interval < 10:
-        _LOGGER.warning(
-            "A scan interval too low has been set, you will send too many requests to your IPX800"
-        )
-
-    coordinator = DataUpdateCoordinator(
-        hass,
-        _LOGGER,
-        config_entry=entry,
-        name=config[CONF_NAME],
-        update_method=async_update_data,
-        update_interval=timedelta(seconds=scan_interval),
-        request_refresh_debouncer=Debouncer(
-            hass,
-            _LOGGER,
-            cooldown=REQUEST_REFRESH_DELAY,
-            immediate=False,
-        ),
-    )
-
+    coordinator = IpxCoordinator(hass, entry)
     await coordinator.async_config_entry_first_refresh()
+    entry.runtime_data = coordinator
 
-    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
-
+    ipx = coordinator.ipx
+    config = coordinator.config
     device_registry = async_get_device_registry(hass)
     device_registry.async_get_or_create(
         config_entry_id=entry.entry_id,
@@ -244,20 +126,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
     _async_migrate_extension_devices(hass, entry, ipx.mac_address)
 
-    hass.data[DOMAIN][entry.entry_id] = {
-        CONF_NAME: config[CONF_NAME],
-        CONF_HOST: config[CONF_HOST],
-        CONF_PUSH_PASSWORD: config.get(CONF_PUSH_PASSWORD),
-        CONTROLLER: ipx,
-        COORDINATOR: coordinator,
-        CONF_DEVICES: {},
-    }
-
-    for platform in PLATFORMS:
-        _LOGGER.debug("Load platform %s", platform)
-        hass.data[DOMAIN][entry.entry_id][CONF_DEVICES][platform] = (
-            filter_entities_by_platform(entities, platform)
-        )
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     # Provide endpoints for the IPX to call to push states
@@ -286,7 +154,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 @callback
 def _async_migrate_extension_devices(
-    hass: HomeAssistant, entry: ConfigEntry, mac_address: str
+    hass: HomeAssistant, entry: IpxConfigEntry, mac_address: str
 ) -> None:
     """Prefix the extension device identifiers with the IPX800 MAC address.
 
@@ -314,7 +182,7 @@ def _async_migrate_extension_devices(
 
 
 async def async_remove_config_entry_device(
-    hass: HomeAssistant, entry: ConfigEntry, device_entry: DeviceEntry
+    hass: HomeAssistant, entry: IpxConfigEntry, device_entry: DeviceEntry
 ) -> bool:
     """Allow removing devices left without entities, like the merged ones."""
     return not async_entries_for_device(
@@ -324,14 +192,6 @@ async def async_remove_config_entry_device(
     )
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: IpxConfigEntry) -> bool:
     """Unload a config entry."""
-    if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        hass.data[DOMAIN].pop(entry.entry_id)
-
-    return unload_ok
-
-
-async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Handle options update."""
-    await hass.config_entries.async_reload(entry.entry_id)
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

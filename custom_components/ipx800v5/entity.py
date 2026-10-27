@@ -1,5 +1,8 @@
 """Represent the IPX800V5 base entity."""
 
+import probatio
+from pypx800v5 import EXTENSIONS, IPX, IPX800
+
 from homeassistant.const import (
     CONF_DEVICE_CLASS,
     CONF_ENTITY_CATEGORY,
@@ -13,13 +16,8 @@ from homeassistant.helpers.device_registry import (
     DeviceInfo,
     async_get_device_id_by_identifier,
 )
-from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
-    DataUpdateCoordinator,
-)
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import slugify
-from pypx800v5 import EXTENSIONS, IPX, IPX800
-from voluptuous.util import Upper
 
 from .const import (
     CONF_COMPONENT,
@@ -29,23 +27,65 @@ from .const import (
     CONF_IO_NUMBER,
     CONF_IO_NUMBERS,
     CONF_TRANSITION,
+    CONF_TRANSLATION_KEY,
     DEFAULT_TRANSITION,
     DOMAIN,
 )
+from .coordinator import IpxCoordinator
 
 
-class IpxEntity(CoordinatorEntity):
+def _remove_device_name(name: str, device_name: str) -> str | None:
+    """Return the name without the device name, or None when it's the same.
+
+    Same rules as Home Assistant for the friendly names of the entities
+    without has_entity_name (_async_strip_prefix_from_entity_name of the
+    entity registry): the prefix is case insensitive and followed by a
+    separator, which is removed, and a lowercase first word is capitalized.
+    """
+    prefix = device_name.casefold()
+    candidate = name[: len(prefix)]
+    prefix_len = len(candidate)
+    candidate = candidate.casefold()
+    if not candidate.startswith(prefix):
+        return name
+    # Casefolded strings can be longer
+    prefix_diff = len(candidate) - len(prefix)
+    while prefix_diff > 0:
+        prefix_len -= 1
+        prefix_diff -= len(name[prefix_len].casefold())
+    if prefix_diff < 0:
+        return name
+    unprefixed = name[prefix_len:].lstrip(" -:")
+    if not unprefixed:
+        return None
+    if len(unprefixed) == len(name) - prefix_len:
+        # Not followed by a separator
+        return name
+    if not unprefixed.partition(" ")[0].islower():
+        return unprefixed
+    return unprefixed[0].upper() + unprefixed[1:]
+
+
+class IpxEntity(CoordinatorEntity[IpxCoordinator]):
     """Representation of a IPX800 generic device entity."""
+
+    _attr_has_entity_name = True
 
     def __init__(
         self,
         device_config: dict,
         ipx: IPX800,
-        coordinator: DataUpdateCoordinator,
-        suffix_name=None,
-        device_name=None,
+        coordinator: IpxCoordinator,
+        suffix_name: str | None = None,
+        device_name: str | None = None,
+        translation_key: str | None = None,
     ) -> None:
-        """Initialize the device."""
+        """Initialize the device.
+
+        suffix_name is the English name of the secondary entities of a
+        device, translated with translation_key when the entity is named
+        after its device.
+        """
         super().__init__(coordinator)
 
         self.ipx = ipx
@@ -54,14 +94,15 @@ class IpxEntity(CoordinatorEntity):
         )
         self._component: str = device_config[CONF_COMPONENT]
         self._ext_type: str = device_config[CONF_EXT_TYPE]
-        self._ext_number: int | None = device_config.get(CONF_EXT_NUMBER)
+        # Defaults to 0 in the configuration schema, always set otherwise
+        self._ext_number: int = device_config[CONF_EXT_NUMBER]
         self._io_number: int | None = device_config.get(CONF_IO_NUMBER)
         self._io_numbers: list[int] = device_config.get(CONF_IO_NUMBERS, [])
         self._io_id: int | None = device_config.get(CONF_ID)
 
-        self._attr_name: str = device_config[CONF_NAME]
-        if suffix_name:
-            self._attr_name = f"{self._attr_name} {suffix_name}"
+        name: str = device_config[CONF_NAME]
+        self._config_name = name
+        full_name = f"{name} {suffix_name}" if suffix_name else name
         # Only override the defaults set by the entity classes when configured
         if (device_class := device_config.get(CONF_DEVICE_CLASS)) is not None:
             self._attr_device_class = device_class
@@ -71,6 +112,8 @@ class IpxEntity(CoordinatorEntity):
             self._attr_icon = icon
         if (entity_category := device_config.get(CONF_ENTITY_CATEGORY)) is not None:
             self._attr_entity_category = entity_category
+        # Built from the full name, which was the entity name before
+        # has_entity_name
         self._attr_unique_id = "_".join(
             [
                 DOMAIN,
@@ -78,7 +121,7 @@ class IpxEntity(CoordinatorEntity):
                 self._ext_type,
                 str(self._ext_number),
                 self._component,
-                slugify(self._attr_name),
+                slugify(full_name),
             ]
         )
         self._attr_extra_state_attributes = {
@@ -90,23 +133,24 @@ class IpxEntity(CoordinatorEntity):
         configuration_url = f"http://{self.ipx.host}:{self.ipx.port}/"
 
         device_model = (
-            Upper(self._ext_type[:1] + "-" + self._ext_type[1:])
+            probatio.Upper(self._ext_type[:1] + "-" + self._ext_type[1:])
             if self._ext_type in EXTENSIONS
             else "IPX800 V5"
         )
         if self._ext_type == IPX:
+            device_name = coordinator.name
             self._attr_device_info = DeviceInfo(
                 identifiers={(DOMAIN, self.ipx.mac_address)},
                 manufacturer="GCE Electronics",
                 model=device_model,
-                name=coordinator.name,
+                name=device_name,
                 configuration_url=configuration_url,
                 sw_version=self.ipx.firmware_version,
                 connections={(CONNECTION_NETWORK_MAC, str(self.ipx.mac_address))},
             )
         else:
             device_name = device_name or device_config.get(
-                CONF_EXT_NAME, f"{Upper(self._ext_type)} N°{self._ext_number}"
+                CONF_EXT_NAME, f"{probatio.Upper(self._ext_type)} N°{self._ext_number}"
             )
             self._attr_device_info = DeviceInfo(
                 identifiers={
@@ -124,3 +168,61 @@ class IpxEntity(CoordinatorEntity):
                     config_entry_id=coordinator.config_entry.entry_id,
                 ),
             )
+
+        self._set_name(
+            name,
+            device_name,
+            suffix_name,
+            translation_key or device_config.get(CONF_TRANSLATION_KEY),
+        )
+
+    @property
+    def io_number(self) -> int:
+        """Return the IO number, required by the entities of an IO."""
+        if self._io_number is None:
+            raise ValueError(
+                f"{CONF_IO_NUMBER} is required by the {self._component}"
+                f" {self._config_name} of the IPX800 configuration"
+            )
+        return self._io_number
+
+    @property
+    def io_id(self) -> int:
+        """Return the IPX800 value ID, required by the IO and analog entities."""
+        if self._io_id is None:
+            raise ValueError(
+                f"{CONF_ID} is required by the {self._component}"
+                f" {self._config_name} of the IPX800 configuration"
+            )
+        return self._io_id
+
+    def _set_name(
+        self,
+        name: str,
+        device_name: str,
+        suffix_name: str | None,
+        translation_key: str | None,
+    ) -> None:
+        """Name the entity without the name of its device.
+
+        The names come from the user configuration or the IPX800 and often
+        start with the device name, which Home Assistant adds to the friendly
+        name: it's removed from the entity name, so the friendly names don't
+        change.
+        """
+        if translation_key is not None:
+            # Also gives the icon of the entity
+            self._attr_translation_key = translation_key
+            if suffix_name is None:
+                # Entity of the IPX800 itself, named by the integration
+                return
+
+        # None for the main entity of its device
+        entity_name = _remove_device_name(name, device_name)
+
+        if suffix_name is None:
+            self._attr_name = entity_name
+        elif entity_name is not None:
+            self._attr_name = f"{entity_name} {suffix_name}"
+        elif translation_key is None:
+            self._attr_name = suffix_name

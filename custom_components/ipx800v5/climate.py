@@ -3,21 +3,6 @@
 import logging
 from typing import Any
 
-from homeassistant.components.climate import ClimateEntity
-from homeassistant.components.climate.const import (
-    PRESET_AWAY,
-    PRESET_COMFORT,
-    PRESET_ECO,
-    PRESET_NONE,
-    ClimateEntityFeature,
-    HVACAction,
-    HVACMode,
-)
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from pypx800v5 import (
     EXT_X4FP,
     EXT_X8R,
@@ -31,33 +16,46 @@ from pypx800v5 import (
     X4FPMode,
 )
 
+from homeassistant.components.climate import ClimateEntity
+from homeassistant.components.climate.const import (
+    PRESET_AWAY,
+    PRESET_COMFORT,
+    PRESET_ECO,
+    PRESET_NONE,
+    ClimateEntityFeature,
+    HVACAction,
+    HVACMode,
+)
+from homeassistant.const import ATTR_TEMPERATURE, Platform, UnitOfTemperature
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
 from .const import (
-    CONF_DEVICES,
     CONF_EXT_TYPE,
     CONF_MAX_TEMP,
     CONF_TARGET_TEMP_STEP,
-    CONTROLLER,
-    COORDINATOR,
     DEFAULT_COOLING_MAX_TEMP,
     DEFAULT_MAX_TEMP,
     DEFAULT_MIN_TEMP,
     DEFAULT_TARGET_TEMP_STEP,
-    DOMAIN,
 )
+from .coordinator import IpxConfigEntry, IpxCoordinator
 from .entity import IpxEntity
 
 _LOGGER = logging.getLogger(__name__)
 
+PARALLEL_UPDATES = 0
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: IpxConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the IPX800 switches."""
-    controller = hass.data[DOMAIN][entry.entry_id][CONTROLLER]
-    coordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
-    devices = hass.data[DOMAIN][entry.entry_id][CONF_DEVICES]["climate"]
+    coordinator = entry.runtime_data
+    controller = coordinator.ipx
+    devices = coordinator.devices[Platform.CLIMATE]
 
     entities: list[ClimateEntity] = []
 
@@ -80,7 +78,6 @@ class X4FPClimate(IpxEntity, ClimateEntity):
         | ClimateEntityFeature.TURN_OFF
         | ClimateEntityFeature.TURN_ON
     )
-    _enable_turn_on_off_backwards_compatibility = False
     _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
     _attr_preset_modes = [
         PRESET_COMFORT,
@@ -96,11 +93,11 @@ class X4FPClimate(IpxEntity, ClimateEntity):
         self,
         device_config: dict,
         ipx: IPX800,
-        coordinator: DataUpdateCoordinator,
+        coordinator: IpxCoordinator,
     ) -> None:
         """Initialize the X4FPClimate."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = X4FP(ipx, self._ext_number, self._io_number)
+        self.control = X4FP(ipx, self._ext_number, self.io_number)
 
     @property
     def _mode(self) -> X4FPMode:
@@ -157,7 +154,7 @@ class X4FPClimate(IpxEntity, ClimateEntity):
             f"{PRESET_COMFORT} -1": X4FPMode.COMFORT_1,
             f"{PRESET_COMFORT} -2": X4FPMode.COMFORT_2,
         }
-        await self.control.set_mode(switcher.get(preset_mode))
+        await self.control.set_mode(switcher[preset_mode])
         await self.coordinator.async_request_refresh()
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
@@ -185,7 +182,6 @@ class RelayClimate(IpxEntity, ClimateEntity):
         | ClimateEntityFeature.TURN_OFF
         | ClimateEntityFeature.TURN_ON
     )
-    _enable_turn_on_off_backwards_compatibility = False
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
     _attr_preset_modes = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY, PRESET_NONE]
@@ -194,7 +190,7 @@ class RelayClimate(IpxEntity, ClimateEntity):
         self,
         device_config: dict,
         ipx: IPX800,
-        coordinator: DataUpdateCoordinator,
+        coordinator: IpxCoordinator,
     ) -> None:
         """Initialize the RelayClimate."""
         super().__init__(device_config, ipx, coordinator)
@@ -288,7 +284,6 @@ class ThermostatClimate(IpxEntity, ClimateEntity):
         | ClimateEntityFeature.TURN_OFF
         | ClimateEntityFeature.TURN_ON
     )
-    _enable_turn_on_off_backwards_compatibility = False
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_preset_modes = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY, PRESET_NONE]
 
@@ -296,7 +291,7 @@ class ThermostatClimate(IpxEntity, ClimateEntity):
         self,
         device_config: dict,
         ipx: IPX800,
-        coordinator: DataUpdateCoordinator,
+        coordinator: IpxCoordinator,
     ) -> None:
         """Initialize the IPX800 thermostat."""
         super().__init__(device_config, ipx, coordinator)
@@ -311,7 +306,7 @@ class ThermostatClimate(IpxEntity, ClimateEntity):
         )
         _LOGGER.debug(
             "Thermostat %s initialized - min_temp=NoFrost (dynamic), max_temp=%s, step=%s",
-            self._attr_name,
+            self.control.name,
             self._attr_max_temp,
             self._attr_target_temperature_step,
         )
@@ -320,19 +315,19 @@ class ThermostatClimate(IpxEntity, ClimateEntity):
         """Get NoFrost temperature from IPX800 config."""
         try:
             nofrost = float(self.control.init_config["setPointNoFrost"])
-            _LOGGER.debug(
-                "Thermostat %s - Read NoFrost from IPX800: %s°C",
-                self._attr_name,
-                nofrost,
-            )
-            return nofrost
         except (AttributeError, KeyError, ValueError, TypeError) as err:
             _LOGGER.warning(
                 "Could not read NoFrost from IPX800 for %s: %s",
-                self._attr_name,
+                self.control.name,
                 err,
             )
-        return DEFAULT_MIN_TEMP
+            return DEFAULT_MIN_TEMP
+        _LOGGER.debug(
+            "Thermostat %s - Read NoFrost from IPX800: %s°C",
+            self.control.name,
+            nofrost,
+        )
+        return nofrost
 
     @property
     def _on_mode(self) -> HVACMode:

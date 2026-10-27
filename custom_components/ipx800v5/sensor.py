@@ -3,25 +3,6 @@
 import logging
 
 import pypx800v5
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntity,
-    SensorStateClass,
-)
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    CONF_NAME,
-    CONF_TYPE,
-    LIGHT_LUX,
-    PERCENTAGE,
-    EntityCategory,
-    UnitOfElectricCurrent,
-    UnitOfTemperature,
-)
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import StateType
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from pypx800v5 import (
     EXT_X400,
     EXT_XDISPLAY,
@@ -36,21 +17,43 @@ from pypx800v5 import (
     XDisplay,
 )
 
-from .const import CONF_DEVICES, CONF_EXT_TYPE, CONTROLLER, COORDINATOR, DOMAIN
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
+)
+from homeassistant.const import (
+    CONF_NAME,
+    CONF_TYPE,
+    LIGHT_LUX,
+    EntityCategory,
+    Platform,
+    UnitOfElectricCurrent,
+    UnitOfRatio,
+    UnitOfTemperature,
+)
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.typing import StateType
+
+from .const import CONF_EXT_TYPE
+from .coordinator import IpxConfigEntry, IpxCoordinator
 from .entity import IpxEntity
 
 _LOGGER = logging.getLogger(__name__)
 
+PARALLEL_UPDATES = 0
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: IpxConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the IPX800 sensors."""
-    controller = hass.data[DOMAIN][entry.entry_id][CONTROLLER]
-    coordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
-    devices = hass.data[DOMAIN][entry.entry_id][CONF_DEVICES]["sensor"]
+    coordinator = entry.runtime_data
+    controller = coordinator.ipx
+    devices = coordinator.devices[Platform.SENSOR]
 
     entities: list[SensorEntity] = []
 
@@ -78,7 +81,7 @@ async def async_setup_entry(
                     controller,
                     coordinator,
                     SensorDeviceClass.HUMIDITY,
-                    PERCENTAGE,
+                    UnitOfRatio.PERCENTAGE,
                     "HUM",
                     "Humidity",
                     device[CONF_NAME],
@@ -121,7 +124,7 @@ class GenericAnalogSensor(IpxEntity, SensorEntity):
         self,
         device_config: dict,
         ipx: IPX800,
-        coordinator: DataUpdateCoordinator,
+        coordinator: IpxCoordinator,
         pypx_object_name: str,
         pypx_property_name: str,
         device_class: SensorDeviceClass | None = None,
@@ -147,7 +150,7 @@ class AnalogSensor(IpxEntity, SensorEntity):
     @property
     def native_value(self) -> float:
         """Return the current value."""
-        return self.coordinator.data[self._io_id]["value"]  # type: ignore[index]
+        return self.coordinator.data[self.io_id]["value"]
 
 
 class IpxAnalogInputSensor(IpxEntity, SensorEntity):
@@ -156,11 +159,11 @@ class IpxAnalogInputSensor(IpxEntity, SensorEntity):
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(
-        self, device_config: dict, ipx: IPX800, coordinator: DataUpdateCoordinator
+        self, device_config: dict, ipx: IPX800, coordinator: IpxCoordinator
     ) -> None:
         """Initialize the analog input sensor of the IPX800."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = IPX800AnalogInput(ipx, self._io_number)
+        self.control = IPX800AnalogInput(ipx, self.io_number)
 
     @property
     def native_value(self) -> float:
@@ -175,7 +178,7 @@ class XTHLSensor(IpxEntity, SensorEntity):
         self,
         device_config: dict,
         ipx: IPX800,
-        coordinator: DataUpdateCoordinator,
+        coordinator: IpxCoordinator,
         device_class: SensorDeviceClass,
         unit_of_measurement: str,
         req_type: str,
@@ -183,7 +186,14 @@ class XTHLSensor(IpxEntity, SensorEntity):
         device_name: str,
     ) -> None:
         """Initialize the X-THL sensor."""
-        super().__init__(device_config, ipx, coordinator, suffix_name, device_name)
+        super().__init__(
+            device_config,
+            ipx,
+            coordinator,
+            suffix_name=suffix_name,
+            device_name=device_name,
+            translation_key=suffix_name.lower(),
+        )
         self.control = XTHL(ipx, self._ext_number)
         self._attr_device_class = device_class
         self._attr_native_unit_of_measurement = unit_of_measurement
@@ -207,11 +217,11 @@ class X400Sensor(IpxEntity, SensorEntity):
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(
-        self, device_config: dict, ipx: IPX800, coordinator: DataUpdateCoordinator
+        self, device_config: dict, ipx: IPX800, coordinator: IpxCoordinator
     ) -> None:
         """Initialize the X-400 sensor."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = X400(ipx, self._ext_number, self._io_number)
+        self.control = X400(ipx, self._ext_number, self.io_number)
         if self.control.is_current_clamp:
             self._attr_device_class = SensorDeviceClass.CURRENT
             self._attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
@@ -227,12 +237,17 @@ class XDisplayAutoOffSensor(IpxEntity, SensorEntity):
     """Representation of a X-Display auto off sensor."""
 
     def __init__(
-        self, device_config: dict, ipx: IPX800, coordinator: DataUpdateCoordinator
+        self, device_config: dict, ipx: IPX800, coordinator: IpxCoordinator
     ) -> None:
         """Initialize the sensor."""
-        super().__init__(device_config, ipx, coordinator, suffix_name="Auto off")
+        super().__init__(
+            device_config,
+            ipx,
+            coordinator,
+            suffix_name="Auto off",
+            translation_key="auto_off",
+        )
         self.control = XDisplay(ipx, self._ext_number)
-        self._attr_icon = "mdi:timer"
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
@@ -242,15 +257,20 @@ class XDisplayAutoOffSensor(IpxEntity, SensorEntity):
 
 
 class XDisplaySensitiveSensor(IpxEntity, SensorEntity):
-    """Representation of a X-Display auto off sensor."""
+    """Representation of a X-Display sensitivity sensor."""
 
     def __init__(
-        self, device_config: dict, ipx: IPX800, coordinator: DataUpdateCoordinator
+        self, device_config: dict, ipx: IPX800, coordinator: IpxCoordinator
     ) -> None:
         """Initialize the sensor."""
-        super().__init__(device_config, ipx, coordinator, suffix_name="Sensitive")
+        super().__init__(
+            device_config,
+            ipx,
+            coordinator,
+            suffix_name="Sensitive",
+            translation_key="sensitive",
+        )
         self.control = XDisplay(ipx, self._ext_number)
-        self._attr_icon = "mdi:fingerprint"
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property

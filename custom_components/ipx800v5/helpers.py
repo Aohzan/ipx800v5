@@ -1,21 +1,8 @@
 """Tools to manage IPX800V5 tools."""
 
-import logging
 from itertools import groupby
+import logging
 
-from homeassistant.components.binary_sensor import BinarySensorDeviceClass
-from homeassistant.components.button import ButtonDeviceClass
-from homeassistant.config_entries import SOURCE_USER, ConfigEntry
-from homeassistant.const import (
-    CONF_API_KEY,
-    CONF_DEVICE_CLASS,
-    CONF_ENTITY_CATEGORY,
-    CONF_ID,
-    CONF_NAME,
-    CONF_SCAN_INTERVAL,
-    CONF_TYPE,
-    EntityCategory,
-)
 from pypx800v5 import (
     API_CONFIG_NAME,
     API_CONFIG_TYPE,
@@ -40,6 +27,20 @@ from pypx800v5 import (
     TYPE_IO,
 )
 
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass
+from homeassistant.components.button import ButtonDeviceClass
+from homeassistant.config_entries import SOURCE_USER, ConfigEntry
+from homeassistant.const import (
+    CONF_API_KEY,
+    CONF_DEVICE_CLASS,
+    CONF_ENTITY_CATEGORY,
+    CONF_ID,
+    CONF_NAME,
+    CONF_SCAN_INTERVAL,
+    CONF_TYPE,
+    EntityCategory,
+)
+
 from .const import (
     CONF_COMPONENT,
     CONF_DEVICES,
@@ -49,7 +50,9 @@ from .const import (
     CONF_IO_NUMBER,
     CONF_IO_NUMBERS,
     CONF_PUSH_PASSWORD,
+    CONF_TRANSLATION_KEY,
     DEFAULT_IPX_NAME,
+    DIAG_SENSORS_TRANSLATION_KEYS,
     TYPE_IPX_OPENCOLL,
     TYPE_IPX_OPTO,
 )
@@ -118,10 +121,13 @@ def get_device_in_devices_config(
             if device_config[CONF_IO_NUMBER] == device_auto[CONF_IO_NUMBER]:
                 device = device_config
                 break
-        elif CONF_IO_NUMBERS in device_auto and CONF_IO_NUMBERS in device_config:
-            if device_config[CONF_IO_NUMBERS] == device_auto[CONF_IO_NUMBERS]:
-                device = device_config
-                break
+        elif (
+            CONF_IO_NUMBERS in device_auto
+            and CONF_IO_NUMBERS in device_config
+            and device_config[CONF_IO_NUMBERS] == device_auto[CONF_IO_NUMBERS]
+        ):
+            device = device_config
+            break
     if device is not None:
         _LOGGER.debug("Found custom config for device %s", device[CONF_NAME])
         if use_device_name_as_ext_name:
@@ -142,6 +148,7 @@ def build_ipx_system_entities(ipx: IPX800, enable_diag_sensors: bool = False) ->
             CONF_EXT_NUMBER: 0,
             CONF_DEVICE_CLASS: ButtonDeviceClass.RESTART,
             CONF_ENTITY_CATEGORY: EntityCategory.DIAGNOSTIC,
+            CONF_TRANSLATION_KEY: "reboot",
         }
     ]
     # Add all diagnostic entities
@@ -154,17 +161,18 @@ def build_ipx_system_entities(ipx: IPX800, enable_diag_sensors: bool = False) ->
                 "anaMonitorConnections",
             ]:
                 name = key.removeprefix("ana")
-                entities.append(
-                    {
-                        CONF_NAME: f"{DEFAULT_IPX_NAME} {name}",
-                        CONF_COMPONENT: "sensor",
-                        CONF_EXT_TYPE: IPX,
-                        CONF_EXT_NUMBER: 0,
-                        CONF_TYPE: TYPE_ANA,
-                        CONF_ID: value,
-                        CONF_ENTITY_CATEGORY: EntityCategory.DIAGNOSTIC,
-                    }
-                )
+                entity = {
+                    CONF_NAME: f"{DEFAULT_IPX_NAME} {name}",
+                    CONF_COMPONENT: "sensor",
+                    CONF_EXT_TYPE: IPX,
+                    CONF_EXT_NUMBER: 0,
+                    CONF_TYPE: TYPE_ANA,
+                    CONF_ID: value,
+                    CONF_ENTITY_CATEGORY: EntityCategory.DIAGNOSTIC,
+                }
+                if translation_key := DIAG_SENSORS_TRANSLATION_KEYS.get(key):
+                    entity[CONF_TRANSLATION_KEY] = translation_key
+                entities.append(entity)
     if ipx.io_acpower_id in ipx.ipx_config:
         entities.append(
             {
@@ -176,6 +184,7 @@ def build_ipx_system_entities(ipx: IPX800, enable_diag_sensors: bool = False) ->
                 CONF_ID: ipx.ipx_config[ipx.io_acpower_id],
                 CONF_DEVICE_CLASS: BinarySensorDeviceClass.POWER,
                 CONF_ENTITY_CATEGORY: EntityCategory.DIAGNOSTIC,
+                CONF_TRANSLATION_KEY: "ac_power",
             }
         )
     return entities
@@ -191,7 +200,7 @@ def build_ipx_entities(
         _LOGGER.debug("Build entities for the IPX800 V5")
         for i in range(8):
             # relais
-            entities.append(  # noqa: PERF401
+            entities.append(
                 get_device_in_devices_config(
                     devices_config,
                     {
@@ -205,7 +214,7 @@ def build_ipx_entities(
             )
         for i in range(4):
             # open collector
-            entities.append(  # noqa: PERF401
+            entities.append(
                 get_device_in_devices_config(
                     devices_config,
                     {
@@ -220,7 +229,7 @@ def build_ipx_entities(
             )
         for i in range(8):
             # digital inputs
-            entities.append(  # noqa: PERF401
+            entities.append(
                 get_device_in_devices_config(
                     devices_config,
                     {
@@ -234,7 +243,7 @@ def build_ipx_entities(
             )
         for i in range(4):
             # analog inputs
-            entities.append(  # noqa: PERF401
+            entities.append(
                 get_device_in_devices_config(
                     devices_config,
                     {
@@ -248,7 +257,7 @@ def build_ipx_entities(
             )
         for i in range(4):
             # opto inputs
-            entities.append(  # noqa: PERF401
+            entities.append(
                 get_device_in_devices_config(
                     devices_config,
                     {
@@ -303,7 +312,7 @@ def build_extensions_entities(
                         )
                 elif ext_type == EXT_XDIMMER:
                     for i in range(4):
-                        entities.append(  # noqa: PERF401
+                        entities.append(
                             get_device_in_devices_config(
                                 devices_config,
                                 {
@@ -318,7 +327,7 @@ def build_extensions_entities(
                         )
                 elif ext_type == EXT_XPWM:
                     for i in range(12):
-                        entities.append(  # noqa: PERF401
+                        entities.append(
                             get_device_in_devices_config(
                                 devices_config,
                                 {
@@ -333,7 +342,7 @@ def build_extensions_entities(
                         )
                 elif ext_type in [EXT_X24D, EXT_X8D]:
                     for i in range(24 if ext_type == EXT_X24D else 8):
-                        entities.append(  # noqa: PERF401
+                        entities.append(
                             get_device_in_devices_config(
                                 devices_config,
                                 {
@@ -348,7 +357,7 @@ def build_extensions_entities(
                         )
                 elif ext_type == EXT_X4FP:
                     for i in range(4):
-                        entities.append(  # noqa: PERF401
+                        entities.append(
                             get_device_in_devices_config(
                                 devices_config,
                                 {
@@ -363,7 +372,7 @@ def build_extensions_entities(
                         )
                 elif ext_type == EXT_X4VR:
                     for i in range(4):
-                        entities.append(  # noqa: PERF401
+                        entities.append(
                             get_device_in_devices_config(
                                 devices_config,
                                 {
@@ -421,7 +430,7 @@ def build_extensions_entities(
                     )
                 elif ext_type == EXT_X010V:
                     for i in range(4):
-                        entities.append(  # noqa: PERF401
+                        entities.append(
                             get_device_in_devices_config(
                                 devices_config,
                                 {
@@ -436,7 +445,7 @@ def build_extensions_entities(
                         )
                 elif ext_type == EXT_X400:
                     for i in range(4):
-                        entities.append(  # noqa: PERF401
+                        entities.append(
                             get_device_in_devices_config(
                                 devices_config,
                                 {

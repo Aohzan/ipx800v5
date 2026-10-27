@@ -1,17 +1,29 @@
 """Config flow to configure the ipx800v5 integration."""
 
-import logging
+from collections.abc import Mapping
 from itertools import groupby
+import logging
 from typing import Any
 
-import voluptuous as vol
 from aiohttp import ClientSession
-from homeassistant import config_entries
+import probatio
+from pypx800v5 import (
+    API_CONFIG_NAME,
+    EXT_X8R,
+    IPX,
+    IPX800,
+    IPX800CannotConnectError,
+    IPX800InvalidAuthError,
+    IPX800RequestError,
+)
+
 from homeassistant.config_entries import (
+    SOURCE_IMPORT,
+    SOURCE_REAUTH,
     SOURCE_USER,
-    ConfigEntry,
+    ConfigFlow,
     ConfigFlowResult,
-    OptionsFlow,
+    OptionsFlowWithReload,
 )
 from homeassistant.const import (
     CONF_API_KEY,
@@ -21,17 +33,15 @@ from homeassistant.const import (
     CONF_PORT,
     CONF_SCAN_INTERVAL,
 )
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from pypx800v5 import (
-    API_CONFIG_NAME,
-    EXT_X8R,
-    IPX,
-    IPX800,
-    IPX800CannotConnectError,
-    IPX800InvalidAuthError,
+from homeassistant.helpers.device_registry import (
+    CONNECTION_NETWORK_MAC,
+    async_entries_for_config_entry,
+    async_get as async_get_device_registry,
+    format_mac,
 )
-from voluptuous.util import Upper
+from homeassistant.helpers.typing import UNDEFINED
 
 from .const import (
     CONF_COMPONENT,
@@ -44,42 +54,54 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
+from .coordinator import IpxConfigEntry
 from .helpers import get_device_in_devices_config, get_entry_config
 
 _LOGGER = logging.getLogger(__name__)
 
-BASE_SCHEMA = vol.Schema(
+BASE_SCHEMA = probatio.Schema(
     {
-        vol.Required(CONF_NAME, default=DEFAULT_IPX_NAME): str,
-        vol.Required(CONF_HOST): str,
-        vol.Required(CONF_PORT, default=80): int,
-        vol.Required(CONF_API_KEY): str,
+        probatio.Required(CONF_NAME, default=DEFAULT_IPX_NAME): str,
+        probatio.Required(CONF_HOST): str,
+        probatio.Required(CONF_PORT, default=80): int,
+        probatio.Required(CONF_API_KEY): str,
+    }
+)
+REAUTH_SCHEMA = probatio.Schema({probatio.Required(CONF_API_KEY): str})
+RECONFIGURE_SCHEMA = probatio.Schema(
+    {
+        probatio.Required(CONF_HOST): str,
+        probatio.Required(CONF_PORT): int,
     }
 )
 
 
-@config_entries.HANDLERS.register(DOMAIN)
-class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+def _unique_id(host: str) -> str:
+    """Return the unique ID of the config entry of an IPX800."""
+    return f"{DOMAIN}, {host}"
+
+
+class IpxConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a IPX800 config flow."""
 
     VERSION = 1
-    CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     def __init__(self) -> None:
         """Initialize class variables."""
         self.base_config: dict[str, Any] = {}
+        self.params_schema: dict = {}
 
     async def async_step_import(self, import_info) -> ConfigFlowResult:
         """Import an advanced configuration from YAML config."""
-        entry = await self.async_set_unique_id(f"{DOMAIN}, {import_info[CONF_HOST]}")
+        entry = await self.async_set_unique_id(_unique_id(import_info[CONF_HOST]))
 
         if entry:
-            if entry.source == "user":
+            if entry.source == SOURCE_USER:
                 _LOGGER.error(
                     "The IPX800 V5 on %s is already configured from the UI. Delete it first if you want to configure it from configuration.yaml",
                     import_info[CONF_HOST],
                 )
-                return self.async_abort(reason="single_instance_allowed")
+                return self.async_abort(reason="already_configured")
             self.hass.config_entries.async_update_entry(entry, data=import_info)
             self._abort_if_unique_id_configured()
 
@@ -95,13 +117,13 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 step_id="user", data_schema=BASE_SCHEMA, errors=errors
             )
 
-        entry = await self.async_set_unique_id(f"{DOMAIN}, {user_input[CONF_HOST]}")
-        if entry:
-            self._abort_if_unique_id_configured()
+        await self.async_set_unique_id(_unique_id(user_input[CONF_HOST]))
+        self._abort_if_unique_id_configured()
 
-        session = async_get_clientsession(self.hass, False)
+        session = async_get_clientsession(self.hass, verify_ssl=False)
 
-        errors = await _test_connection(session, user_input)
+        # Read the IPX800 configuration here to show the errors in this step
+        schema, errors = await _async_get_param_schema(session, user_input, SOURCE_USER)
 
         if errors:
             return self.async_show_form(
@@ -109,17 +131,14 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
 
         self.base_config = user_input
+        self.params_schema = schema
         return await self.async_step_params()
 
     async def async_step_params(self, user_input=None) -> ConfigFlowResult:
         """Handle the param flow to customize according to device config."""
         if user_input is None:
-            session = async_get_clientsession(self.hass, False)
             return self.async_show_form(
-                step_id="params",
-                data_schema=vol.Schema(
-                    await _build_param_schema(session, self.base_config, SOURCE_USER)
-                ),
+                step_id="params", data_schema=probatio.Schema(self.params_schema)
             )
 
         return self.async_create_entry(
@@ -127,54 +146,161 @@ class IpxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data=self.base_config | config_organizer(user_input, SOURCE_USER),
         )
 
+    async def async_step_reauth(
+        self, entry_data: Mapping[str, Any]
+    ) -> ConfigFlowResult:
+        """Handle a rejected API key."""
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Ask for a new API key."""
+        return await self._async_step_update_entry(
+            "reauth_confirm", REAUTH_SCHEMA, user_input
+        )
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Change the address of the IPX800."""
+        return await self._async_step_update_entry(
+            "reconfigure", RECONFIGURE_SCHEMA, user_input
+        )
+
+    async def _async_step_update_entry(
+        self, step_id: str, schema: probatio.Schema, user_input: dict[str, Any] | None
+    ) -> ConfigFlowResult:
+        """Update the connection settings of the entry after testing them."""
+        if self.source == SOURCE_REAUTH:
+            entry = self._get_reauth_entry()
+        else:
+            entry = self._get_reconfigure_entry()
+        if entry.source == SOURCE_IMPORT:
+            # configuration.yaml replaces the entry data at each startup
+            return self.async_abort(reason="yaml_entry")
+        config = get_entry_config(entry)
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            new_config = config | user_input
+            unique_id = _unique_id(new_config[CONF_HOST])
+            if unique_id != entry.unique_id:
+                await self.async_set_unique_id(unique_id)
+                self._abort_if_unique_id_configured()
+            errors, mac_address = await _test_connection(
+                async_get_clientsession(self.hass, verify_ssl=False), new_config
+            )
+            if not errors:
+                configured_mac_address = _configured_mac_address(self.hass, entry)
+                if configured_mac_address not in (None, format_mac(mac_address)):
+                    # Its entities would be created again, the old ones
+                    # left orphaned
+                    return self.async_abort(reason="wrong_device")
+                # An API key changed here replaces the one of the options
+                return self.async_update_reload_and_abort(
+                    entry,
+                    unique_id=unique_id,
+                    # The default title is the host
+                    title=new_config[CONF_HOST]
+                    if entry.title == config[CONF_HOST]
+                    else UNDEFINED,
+                    data_updates=user_input,
+                    options={
+                        key: value
+                        for key, value in entry.options.items()
+                        if key not in user_input
+                    },
+                )
+
+        if self.source != SOURCE_REAUTH:
+            # The rejected API key is not suggested
+            schema = self.add_suggested_values_to_schema(schema, user_input or config)
+        return self.async_show_form(step_id=step_id, data_schema=schema, errors=errors)
+
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+    def async_get_options_flow(
+        config_entry: IpxConfigEntry,
+    ) -> IpxOptionsFlowHandler:
         """Define the config flow to handle options."""
         return IpxOptionsFlowHandler()
 
 
-class IpxOptionsFlowHandler(OptionsFlow):
+class IpxOptionsFlowHandler(OptionsFlowWithReload):
     """Handle a IPX800 options flow."""
+
+    def __init__(self) -> None:
+        """Initialize the options flow."""
+        self.schema: dict | None = None
 
     async def async_step_init(self, user_input=None) -> ConfigFlowResult:
         """Manage the options."""
-        if user_input is None:
-            session = async_get_clientsession(self.hass, False)
-
-            schema = await _build_param_schema(
-                session, get_entry_config(self.config_entry), self.config_entry.source
+        if user_input is not None and self.schema is not None:
+            return self.async_create_entry(
+                data=config_organizer(user_input, self.config_entry.source)
             )
 
-            return self.async_show_form(
-                step_id="init",
-                data_schema=vol.Schema(schema),
-            )
-
-        return self.async_create_entry(
-            title=self.config_entry.data[CONF_HOST],
-            data=config_organizer(user_input, self.config_entry.source),
+        # Without the IPX800 configuration, the form only shows the error and
+        # submitting it tries again
+        session = async_get_clientsession(self.hass, verify_ssl=False)
+        schema, errors = await _async_get_param_schema(
+            session, get_entry_config(self.config_entry), self.config_entry.source
+        )
+        if not errors:
+            self.schema = schema
+        return self.async_show_form(
+            step_id="init", data_schema=probatio.Schema(schema), errors=errors
         )
 
 
-async def _test_connection(session: ClientSession, base_config: dict) -> dict[str, str]:
-    errors = {}
+def _configured_mac_address(hass: HomeAssistant, entry: IpxConfigEntry) -> str | None:
+    """Return the MAC address of the IPX800 of an entry, None before its setup."""
+    for device in async_entries_for_config_entry(
+        async_get_device_registry(hass), entry.entry_id
+    ):
+        for connection_type, mac_address in device.connections:
+            if connection_type == CONNECTION_NETWORK_MAC:
+                return mac_address
+    return None
 
+
+async def _test_connection(
+    session: ClientSession, config: dict
+) -> tuple[dict[str, str], str]:
+    """Return the errors of requests to the IPX800, and its MAC address."""
     controller = IPX800(
-        host=base_config[CONF_HOST],
-        port=base_config[CONF_PORT],
-        api_key=base_config[CONF_API_KEY],
+        host=config[CONF_HOST],
+        port=config[CONF_PORT],
+        api_key=config[CONF_API_KEY],
         session=session,
     )
-
     try:
         await controller.ping()
+        await controller.update_ipx_info()
     except IPX800InvalidAuthError:
-        errors["base"] = "invalid_auth"
-    except IPX800CannotConnectError:
-        errors["base"] = "cannot_connect"
+        return {"base": "invalid_auth"}, ""
+    except IPX800CannotConnectError, IPX800RequestError:
+        return {"base": "cannot_connect"}, ""
+    except Exception:
+        _LOGGER.exception("Unexpected error while connecting to the IPX800")
+        return {"base": "unknown"}, ""
+    return {}, controller.mac_address
 
-    return errors
+
+async def _async_get_param_schema(
+    session: ClientSession, config: dict, entry_source: str
+) -> tuple[dict, dict[str, str]]:
+    """Return the params schema, or the errors when the IPX800 can't be read."""
+    try:
+        return await _build_param_schema(session, config, entry_source), {}
+    except IPX800InvalidAuthError:
+        return {}, {"base": "invalid_auth"}
+    except IPX800CannotConnectError, IPX800RequestError:
+        return {}, {"base": "cannot_connect"}
+    except Exception:
+        _LOGGER.exception("Unexpected error while reading the IPX800 configuration")
+        return {}, {"base": "unknown"}
 
 
 async def _build_param_schema(
@@ -185,7 +311,7 @@ async def _build_param_schema(
     """Build schema for params and options flow according to the IPX800 config."""
     # options for ui and yaml entry
     schema = {
-        vol.Required(
+        probatio.Required(
             CONF_SCAN_INTERVAL,
             default=config.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
         ): int,
@@ -197,11 +323,11 @@ async def _build_param_schema(
         devices_config = config.get(CONF_DEVICES, {})
         schema.update(
             {
-                vol.Required(
+                probatio.Required(
                     CONF_API_KEY,
                     default=config.get(CONF_API_KEY),
                 ): str,
-                vol.Optional(
+                probatio.Optional(
                     CONF_PUSH_PASSWORD,
                     default=config.get(CONF_PUSH_PASSWORD, ""),
                 ): str,
@@ -231,10 +357,12 @@ async def _build_param_schema(
             )
             schema.update(
                 {
-                    vol.Required(
+                    probatio.Required(
                         f"ipx_0_{i + 1}",
                         default=device.get(CONF_COMPONENT, "switch"),
-                    ): vol.All(str, vol.Lower, vol.In(["switch", "light"])),
+                    ): probatio.All(
+                        str, probatio.Lower, probatio.In(["switch", "light"])
+                    ),
                 }
             )
 
@@ -258,11 +386,15 @@ async def _build_param_schema(
                         )
                         schema.update(
                             {
-                                vol.Required(
+                                probatio.Required(
                                     f"{ext_type}_{ext_number}_{i + 1}",
                                     description=f"{extension[API_CONFIG_NAME]} N°{i}",
                                     default=device.get(CONF_COMPONENT, "switch"),
-                                ): vol.All(str, vol.Lower, vol.In(["switch", "light"])),
+                                ): probatio.All(
+                                    str,
+                                    probatio.Lower,
+                                    probatio.In(["switch", "light"]),
+                                ),
                             }
                         )
                 ext_number += 1  # noqa: SIM113
@@ -272,33 +404,31 @@ async def _build_param_schema(
 
 def config_organizer(user_input, entry_source):
     """Organize params input to options, with devices config as a yaml-like list."""
+    user_input = dict(user_input)
     config = {}
 
     # For user and yaml entry
-    config[CONF_SCAN_INTERVAL] = user_input[CONF_SCAN_INTERVAL]
-    user_input.pop(CONF_SCAN_INTERVAL)
+    config[CONF_SCAN_INTERVAL] = user_input.pop(CONF_SCAN_INTERVAL)
 
     # Only for user entry, devices of yaml entries come from configuration.yaml
     if entry_source != SOURCE_USER:
         return config
 
     if CONF_API_KEY in user_input:
-        config[CONF_API_KEY] = user_input[CONF_API_KEY]
-        user_input.pop(CONF_API_KEY)
+        config[CONF_API_KEY] = user_input.pop(CONF_API_KEY)
 
     if CONF_PUSH_PASSWORD in user_input:
-        config[CONF_PUSH_PASSWORD] = user_input[CONF_PUSH_PASSWORD]
-        user_input.pop(CONF_PUSH_PASSWORD)
+        config[CONF_PUSH_PASSWORD] = user_input.pop(CONF_PUSH_PASSWORD)
 
     config[CONF_DEVICES] = []
     for device_config in user_input.items():
         ident = device_config[0].split("_")
         config[CONF_DEVICES].append(
             {
-                CONF_NAME: f"{Upper(ident[0])} N°{ident[1]} Relais {ident[2]}",
+                CONF_NAME: f"{probatio.Upper(ident[0])} N°{ident[1]} Relais {ident[2]}",
                 CONF_EXT_TYPE: str(ident[0]),
                 CONF_EXT_NUMBER: int(ident[1]),
-                CONF_EXT_NAME: f"{Upper(ident[0])} N°{ident[1]}",
+                CONF_EXT_NAME: f"{probatio.Upper(ident[0])} N°{ident[1]}",
                 CONF_IO_NUMBER: int(ident[2]),
                 CONF_COMPONENT: str(device_config[1]),
             }

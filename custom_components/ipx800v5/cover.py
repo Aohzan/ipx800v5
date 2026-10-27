@@ -3,39 +3,42 @@
 import logging
 from typing import Any
 
+from pypx800v5 import EXT_X4VR, IPX800, X4VR
+
 from homeassistant.components.cover import (
     ATTR_POSITION,
     CoverDeviceClass,
     CoverEntity,
     CoverEntityFeature,
 )
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from pypx800v5 import EXT_X4VR, IPX800, X4VR
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import CONF_DEVICES, CONF_EXT_TYPE, CONTROLLER, COORDINATOR, DOMAIN
+from .const import CONF_EXT_TYPE
+from .coordinator import IpxConfigEntry, IpxCoordinator
 from .entity import IpxEntity
 
 _LOGGER = logging.getLogger(__name__)
 
+PARALLEL_UPDATES = 0
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: IpxConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the IPX800 switches."""
-    controller = hass.data[DOMAIN][entry.entry_id][CONTROLLER]
-    coordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
-    devices = hass.data[DOMAIN][entry.entry_id][CONF_DEVICES]["cover"]
+    coordinator = entry.runtime_data
+    controller = coordinator.ipx
+    devices = coordinator.devices[Platform.COVER]
 
     entities: list[CoverEntity] = []
 
     for device in devices:
         if device[CONF_EXT_TYPE] == EXT_X4VR:
-            entities.append(X4VRCover(device, controller, coordinator))  # noqa: PERF401
+            entities.append(X4VRCover(device, controller, coordinator))
 
     async_add_entities(entities)
 
@@ -47,11 +50,11 @@ class X4VRCover(IpxEntity, CoverEntity):
         self,
         device_config: dict,
         ipx: IPX800,
-        coordinator: DataUpdateCoordinator,
+        coordinator: IpxCoordinator,
     ) -> None:
         """Initialize the X4VR Cover."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = X4VR(ipx, self._ext_number, self._io_number)
+        self.control = X4VR(ipx, self._ext_number, self.io_number)
         self._attr_device_class = CoverDeviceClass.SHUTTER
         self._attr_supported_features = (
             CoverEntityFeature.OPEN

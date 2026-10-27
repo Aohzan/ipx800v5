@@ -1,31 +1,34 @@
 """Support for IPX800 V5 select."""
 
-import logging
 from collections.abc import Mapping
+import logging
 from typing import Any
 
-from homeassistant.components.select import SelectEntity
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from pypx800v5 import EXT_XDISPLAY, IPX800, XDisplay
 
-from .const import CONF_DEVICES, CONF_EXT_TYPE, CONTROLLER, COORDINATOR, DOMAIN
+from homeassistant.components.select import SelectEntity
+from homeassistant.const import Platform
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+from .const import CONF_EXT_TYPE
+from .coordinator import IpxConfigEntry, IpxCoordinator
 from .entity import IpxEntity
 
 _LOGGER = logging.getLogger(__name__)
 
+PARALLEL_UPDATES = 0
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: IpxConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the IPX800 switches."""
-    controller = hass.data[DOMAIN][entry.entry_id][CONTROLLER]
-    coordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
-    devices = hass.data[DOMAIN][entry.entry_id][CONF_DEVICES]["select"]
+    coordinator = entry.runtime_data
+    controller = coordinator.ipx
+    devices = coordinator.devices[Platform.SELECT]
 
     entities: list[SelectEntity] = [
         XDisplayScreenSelect(device, controller, coordinator)
@@ -43,12 +46,17 @@ class XDisplayScreenSelect(IpxEntity, SelectEntity):
         self,
         device_config: dict,
         ipx: IPX800,
-        coordinator: DataUpdateCoordinator,
+        coordinator: IpxCoordinator,
     ) -> None:
         """Initialize the X-Display screen select."""
-        super().__init__(device_config, ipx, coordinator, suffix_name="Current screen")
+        super().__init__(
+            device_config,
+            ipx,
+            coordinator,
+            suffix_name="Current screen",
+            translation_key="current_screen",
+        )
         self.control = XDisplay(ipx, self._ext_number)
-        self._attr_icon = "mdi:overscan"
 
     @property
     def options(self) -> list[str]:
