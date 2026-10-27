@@ -87,7 +87,7 @@ class X4FPClimate(IpxEntity, ClimateEntity):
         f"{PRESET_COMFORT} -1",
         f"{PRESET_COMFORT} -2",
     ]
-    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
 
     def __init__(
         self,
@@ -182,7 +182,7 @@ class RelayClimate(IpxEntity, ClimateEntity):
         | ClimateEntityFeature.TURN_OFF
         | ClimateEntityFeature.TURN_ON
     )
-    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
     _attr_preset_modes = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY, PRESET_NONE]
 
@@ -284,7 +284,7 @@ class ThermostatClimate(IpxEntity, ClimateEntity):
         | ClimateEntityFeature.TURN_OFF
         | ClimateEntityFeature.TURN_ON
     )
-    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_preset_modes = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY, PRESET_NONE]
 
     def __init__(
@@ -354,12 +354,12 @@ class ThermostatClimate(IpxEntity, ClimateEntity):
         return self._attr_max_temp
 
     @property
-    def current_temperature(self) -> float:
+    def native_current_temperature(self) -> float:
         """Get current temperature."""
         return float(self.coordinator.data[self.control.ana_measure_id]["value"])
 
     @property
-    def target_temperature(self) -> float:
+    def native_target_temperature(self) -> float:
         """Get target temperature."""
         return float(self.coordinator.data[self.control.ana_consigne_id]["value"])
 
