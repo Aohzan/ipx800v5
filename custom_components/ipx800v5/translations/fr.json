@@ -74,7 +74,8 @@
     },
     "abort": {
       "already_configured": "L'IPX800 V5 avec cette adresse IP est déjà configuré",
-      "yaml_entry": "Cet IPX800 V5 est configuré dans configuration.yaml : modifiez-le dans ce fichier"
+      "yaml_entry": "Cet IPX800 V5 est configuré dans configuration.yaml : modifiez-le dans ce fichier",
+      "wrong_device": "L'IPX800 V5 à cette adresse n'est pas celui configuré (autre adresse MAC)"
     }
   },
   "options": {
@@ -123,7 +124,8 @@
     },
     "error": {
       "invalid_auth": "Problème d'autorisation, vérifiez la clé API",
-      "cannot_connect": "Impossible de se connecter à l'IPX800, vérifier l'IP et le port"
+      "cannot_connect": "Impossible de se connecter à l'IPX800, vérifier l'IP et le port",
+      "unknown": "Erreur inconnue"
     }
   },
   "entity": {

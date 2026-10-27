@@ -1,5 +1,7 @@
 """Tests of the config flow of the GCE IPX800 V5 integration."""
 
+from typing import Any
+
 from pypx800v5 import (
     IPX800CannotConnectError,
     IPX800InvalidAuthError,
@@ -18,7 +20,7 @@ from custom_components.ipx800v5.const import (
     CONF_PUSH_PASSWORD,
     DOMAIN,
 )
-from homeassistant.config_entries import SOURCE_IMPORT, SOURCE_USER
+from homeassistant.config_entries import SOURCE_IMPORT, SOURCE_USER, ConfigFlowResult
 from homeassistant.const import (
     CONF_API_KEY,
     CONF_HOST,
@@ -46,6 +48,15 @@ PARAMS_INPUT = {
     **{f"x8r_0_{relay}": "switch" for relay in range(1, 9)},
     "x8r_0_2": "light",
 }
+
+
+def _suggested_values(result: ConfigFlowResult) -> dict[str, Any]:
+    """Return the values suggested by a form."""
+    return {
+        str(key): key.description["suggested_value"]
+        for key in result["data_schema"].schema
+        if key.description and "suggested_value" in key.description
+    }
 
 
 async def test_user_flow(hass: HomeAssistant, mock_ipx: FakeIpxApi) -> None:
@@ -93,6 +104,7 @@ async def test_user_flow(hass: HomeAssistant, mock_ipx: FakeIpxApi) -> None:
         (IPX800CannotConnectError, "cannot_connect"),
         (IPX800RequestError, "cannot_connect"),
         (IPX800InvalidAuthError, "invalid_auth"),
+        (RuntimeError, "unknown"),
     ],
 )
 async def test_user_flow_errors(
@@ -173,18 +185,29 @@ async def test_options_flow(
     assert hass.states.get("light.ipx800_v5_ipx_ndeg0_relais_1") is not None
 
 
-async def test_options_flow_cannot_connect(
-    hass: HomeAssistant, mock_config_entry: MockConfigEntry, mock_ipx: FakeIpxApi
+@pytest.mark.parametrize(
+    ("exception", "error"),
+    [
+        (IPX800CannotConnectError, "cannot_connect"),
+        (RuntimeError, "unknown"),
+    ],
+)
+async def test_options_flow_errors(
+    hass: HomeAssistant,
+    mock_config_entry: MockConfigEntry,
+    mock_ipx: FakeIpxApi,
+    exception: type[Exception],
+    error: str,
 ) -> None:
     """Test the options show an error when the IPX800 can't be read."""
     mock_config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(mock_config_entry.entry_id)
     await hass.async_block_till_done()
 
-    mock_ipx.error = IPX800CannotConnectError()
+    mock_ipx.error = exception()
     result = await hass.config_entries.options.async_init(mock_config_entry.entry_id)
     assert result["type"] is FlowResultType.FORM
-    assert result["errors"] == {"base": "cannot_connect"}
+    assert result["errors"] == {"base": error}
 
     # Submitting the form tries again
     mock_ipx.error = None
@@ -221,12 +244,14 @@ async def test_reauth_flow(
 
     result = await mock_config_entry.start_reauth_flow(hass)
     assert result["step_id"] == "reauth_confirm"
+    assert _suggested_values(result) == {}
 
     mock_ipx.error = IPX800InvalidAuthError()
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], {CONF_API_KEY: "wrong"}
     )
     assert result["errors"] == {"base": "invalid_auth"}
+    assert _suggested_values(result) == {}
 
     mock_ipx.error = None
     result = await hass.config_entries.flow.async_configure(
@@ -260,6 +285,7 @@ async def test_reconfigure_flow(
 
     result = await mock_config_entry.start_reconfigure_flow(hass)
     assert result["step_id"] == "reconfigure"
+    assert _suggested_values(result) == {CONF_HOST: HOST, CONF_PORT: PORT}
 
     mock_ipx.error = RuntimeError()
     result = await hass.config_entries.flow.async_configure(
@@ -278,6 +304,50 @@ async def test_reconfigure_flow(
     assert mock_config_entry.data[CONF_HOST] == "192.168.1.20"
     assert mock_config_entry.data[CONF_PORT] == 8080
     assert mock_config_entry.unique_id == f"{DOMAIN}, 192.168.1.20"
+    # The default title follows the host
+    assert mock_config_entry.title == "192.168.1.20"
+
+
+async def test_reconfigure_flow_same_device(
+    hass: HomeAssistant, mock_config_entry: MockConfigEntry, mock_ipx: FakeIpxApi
+) -> None:
+    """Test the address can be changed for the same IPX800, keeping the title."""
+    mock_config_entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(mock_config_entry, title="Maison")
+    await hass.config_entries.async_setup(mock_config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    result = await mock_config_entry.start_reconfigure_flow(hass)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_HOST: "192.168.1.20", CONF_PORT: PORT}
+    )
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_successful"
+    assert mock_config_entry.data[CONF_HOST] == "192.168.1.20"
+    assert mock_config_entry.title == "Maison"
+
+
+async def test_reconfigure_flow_wrong_device(
+    hass: HomeAssistant, mock_config_entry: MockConfigEntry, mock_ipx: FakeIpxApi
+) -> None:
+    """Test another IPX800 at the new address is refused."""
+    mock_config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(mock_config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    mock_ipx.mac_address = "00:04:A3:00:00:02"
+    result = await mock_config_entry.start_reconfigure_flow(hass)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_HOST: "192.168.1.20", CONF_PORT: PORT}
+    )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "wrong_device"
+    assert mock_config_entry.data[CONF_HOST] == HOST
+    assert mock_config_entry.unique_id == f"{DOMAIN}, {HOST}"
+    assert mock_config_entry.title == HOST
 
 
 async def test_reconfigure_flow_already_configured(

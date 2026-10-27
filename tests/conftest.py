@@ -106,6 +106,7 @@ class FakeIpxApi:
             return [next(ids) for _ in range(number)]
 
         self.error: Exception | None = None
+        self.mac_address = MAC
         self.requests: list[tuple[str, str, Any]] = []
         self.ipx_config = _ipx_config(ids)
         self.extensions: dict[str, list[dict[str, Any]]] = {
@@ -290,7 +291,7 @@ class FakeIpxApi:
             case ["system", "info"]:
                 return {
                     "firmwareVersion": "5.6.1",
-                    "macAdress": MAC,
+                    "macAdress": self.mac_address,
                     "hostName": "ipx800",
                 }
             case ["system", "ipx"]:
