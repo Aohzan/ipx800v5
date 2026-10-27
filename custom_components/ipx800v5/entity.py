@@ -34,6 +34,38 @@ from .const import (
 from .coordinator import IpxCoordinator
 
 
+def _remove_device_name(name: str, device_name: str) -> str | None:
+    """Return the name without the device name, or None when it's the same.
+
+    Same rules as Home Assistant for the friendly names of the entities
+    without has_entity_name (_async_strip_prefix_from_entity_name of the
+    entity registry): the prefix is case insensitive and followed by a
+    separator, which is removed, and a lowercase first word is capitalized.
+    """
+    prefix = device_name.casefold()
+    candidate = name[: len(prefix)]
+    prefix_len = len(candidate)
+    candidate = candidate.casefold()
+    if not candidate.startswith(prefix):
+        return name
+    # Casefolded strings can be longer
+    prefix_diff = len(candidate) - len(prefix)
+    while prefix_diff > 0:
+        prefix_len -= 1
+        prefix_diff -= len(name[prefix_len].casefold())
+    if prefix_diff < 0:
+        return name
+    unprefixed = name[prefix_len:].lstrip(" -:")
+    if not unprefixed:
+        return None
+    if len(unprefixed) == len(name) - prefix_len:
+        # Not followed by a separator
+        return name
+    if not unprefixed.partition(" ")[0].islower():
+        return unprefixed
+    return unprefixed[0].upper() + unprefixed[1:]
+
+
 class IpxEntity(CoordinatorEntity[IpxCoordinator]):
     """Representation of a IPX800 generic device entity."""
 
@@ -163,11 +195,8 @@ class IpxEntity(CoordinatorEntity[IpxCoordinator]):
                 # Entity of the IPX800 itself, named by the integration
                 return
 
-        if name == device_name:
-            # Main entity of its device
-            entity_name = None
-        else:
-            entity_name = name.removeprefix(f"{device_name} ")
+        # None for the main entity of its device
+        entity_name = _remove_device_name(name, device_name)
 
         if suffix_name is None:
             self._attr_name = entity_name
