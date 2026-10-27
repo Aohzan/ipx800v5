@@ -2,7 +2,7 @@
 
 import logging
 
-import voluptuous as vol
+import probatio
 
 from homeassistant.config_entries import SOURCE_IMPORT
 from homeassistant.const import (
@@ -52,41 +52,43 @@ from .request_views import IpxRequestDataView, IpxRequestRefreshView, IpxRequest
 
 _LOGGER = logging.getLogger(__name__)
 
-IPX800_DEVICES_SCHEMA = vol.Schema(
+IPX800_DEVICES_SCHEMA = probatio.Schema(
     {
-        vol.Required(CONF_NAME): cv.string,
-        vol.Required(CONF_COMPONENT): cv.string,
-        vol.Required(CONF_EXT_TYPE): cv.string,
-        vol.Optional(CONF_EXT_NUMBER, default=0): cv.positive_int,
-        vol.Optional(CONF_TYPE): cv.string,
-        vol.Optional(CONF_IO_NUMBER): cv.positive_int,
-        vol.Optional(CONF_IO_NUMBERS): cv.ensure_list,
-        vol.Optional(CONF_DEFAULT_BRIGHTNESS): cv.positive_int,
-        vol.Optional(CONF_ID): cv.positive_int,
-        vol.Optional(CONF_ICON): cv.icon,
-        vol.Optional(CONF_TRANSITION, default=DEFAULT_TRANSITION): vol.Coerce(float),
-        vol.Optional(CONF_DEVICE_CLASS): cv.string,
-        vol.Optional(CONF_UNIT_OF_MEASUREMENT): cv.string,
+        probatio.Required(CONF_NAME): cv.string,
+        probatio.Required(CONF_COMPONENT): cv.string,
+        probatio.Required(CONF_EXT_TYPE): cv.string,
+        probatio.Optional(CONF_EXT_NUMBER, default=0): cv.positive_int,
+        probatio.Optional(CONF_TYPE): cv.string,
+        probatio.Optional(CONF_IO_NUMBER): cv.positive_int,
+        probatio.Optional(CONF_IO_NUMBERS): cv.ensure_list,
+        probatio.Optional(CONF_DEFAULT_BRIGHTNESS): cv.positive_int,
+        probatio.Optional(CONF_ID): cv.positive_int,
+        probatio.Optional(CONF_ICON): cv.icon,
+        probatio.Optional(CONF_TRANSITION, default=DEFAULT_TRANSITION): probatio.Coerce(
+            float
+        ),
+        probatio.Optional(CONF_DEVICE_CLASS): cv.string,
+        probatio.Optional(CONF_UNIT_OF_MEASUREMENT): cv.string,
     }
 )
 
-IPX800_SCHEMA = vol.Schema(
+IPX800_SCHEMA = probatio.Schema(
     {
-        vol.Required(CONF_NAME): cv.string,
-        vol.Required(CONF_HOST): cv.string,
-        vol.Optional(CONF_PORT, default=80): cv.port,
-        vol.Required(CONF_API_KEY): cv.string,
-        vol.Optional(CONF_DEVICES_AUTO, default=[]): cv.ensure_list,
-        vol.Optional(CONF_DEVICES, default=[]): vol.All(
+        probatio.Required(CONF_NAME): cv.string,
+        probatio.Required(CONF_HOST): cv.string,
+        probatio.Optional(CONF_PORT, default=80): cv.port,
+        probatio.Required(CONF_API_KEY): cv.string,
+        probatio.Optional(CONF_DEVICES_AUTO, default=[]): cv.ensure_list,
+        probatio.Optional(CONF_DEVICES, default=[]): probatio.All(
             cv.ensure_list, [IPX800_DEVICES_SCHEMA]
         ),
     },
-    extra=vol.ALLOW_EXTRA,
+    extra=probatio.ALLOW_EXTRA,
 )
 
-CONFIG_SCHEMA = vol.Schema(
-    {DOMAIN: vol.All(cv.ensure_list, [IPX800_SCHEMA])},
-    extra=vol.ALLOW_EXTRA,
+CONFIG_SCHEMA = probatio.Schema(
+    {DOMAIN: probatio.All(cv.ensure_list, [IPX800_SCHEMA])},
+    extra=probatio.ALLOW_EXTRA,
 )
 
 

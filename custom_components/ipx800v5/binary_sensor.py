@@ -108,7 +108,7 @@ class IOBinarySensor(IpxEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         """Return the current value."""
-        return self.coordinator.data[self._io_id]["on"] is True  # type: ignore[index]
+        return self.coordinator.data[self.io_id]["on"] is True
 
 
 class IpxDigitalInputBinarySensor(IpxEntity, BinarySensorEntity):
@@ -119,7 +119,7 @@ class IpxDigitalInputBinarySensor(IpxEntity, BinarySensorEntity):
     ) -> None:
         """Initialize the digital input sensor of the IPX800."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = IPX800DigitalInput(ipx, self._io_number)
+        self.control = IPX800DigitalInput(ipx, self.io_number)
 
     @property
     def is_on(self) -> bool:
@@ -135,7 +135,7 @@ class IpxOptoInputBinarySensor(IpxEntity, BinarySensorEntity):
     ) -> None:
         """Initialize the opto input sensor of the IPX800."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = IPX800OptoInput(ipx, self._io_number)
+        self.control = IPX800OptoInput(ipx, self.io_number)
 
     @property
     def is_on(self) -> bool:
@@ -151,7 +151,7 @@ class X24DBinarySensor(IpxEntity, BinarySensorEntity):
     ) -> None:
         """Initialize the digital input sensor of the X-24D."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = X24D(ipx, self._ext_number, self._io_number)
+        self.control = X24D(ipx, self._ext_number, self.io_number)
 
     @property
     def is_on(self) -> bool:
@@ -167,7 +167,7 @@ class X8DBinarySensor(IpxEntity, BinarySensorEntity):
     ) -> None:
         """Initialize the digital input sensor of the X-8D."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = X8D(ipx, self._ext_number, self._io_number)
+        self.control = X8D(ipx, self._ext_number, self.io_number)
 
     @property
     def is_on(self) -> bool:
@@ -205,7 +205,7 @@ class X8RLongPushBinarySensor(IpxEntity, BinarySensorEntity):
             suffix_name="Long Push",
             translation_key="long_push",
         )
-        self.control = X8R(ipx, self._ext_number, self._io_number)
+        self.control = X8R(ipx, self._ext_number, self.io_number)
 
     @property
     def is_on(self) -> bool:

@@ -55,7 +55,7 @@ _LOGGER = logging.getLogger(__name__)
 type IpxConfigEntry = ConfigEntry[IpxCoordinator]
 
 
-class IpxCoordinator(DataUpdateCoordinator[dict[str, Any]]):
+class IpxCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]):
     """Fetch the IO and analog values of an IPX800 V5."""
 
     config_entry: IpxConfigEntry
@@ -87,7 +87,7 @@ class IpxCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # Configuration of the entities of each platform
         self.devices: dict[Platform, list[dict[str, Any]]] = {}
         # Text values are not part of the global io/ana states
-        self.str_ids: list[str] = []
+        self.str_ids: list[int] = []
 
     async def _async_setup(self) -> None:
         """Read the configuration of the IPX800 and build its entities."""
@@ -122,11 +122,11 @@ class IpxCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if device[CONF_EXT_TYPE] == OBJECT_ACCESS_CONTROL
         ]
 
-    async def _async_update_data(self) -> dict[str, Any]:
+    async def _async_update_data(self) -> dict[int, dict[str, Any]]:
         """Fetch the values of the IPX800."""
         return await self._async_call(self._async_fetch)
 
-    async def _async_fetch(self) -> dict[str, Any]:
+    async def _async_fetch(self) -> dict[int, dict[str, Any]]:
         """Fetch the IO and analog values, and the text values used."""
         data = await self.ipx.global_get()
         for str_id in self.str_ids:

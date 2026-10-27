@@ -60,6 +60,8 @@ class IpxPushView(HomeAssistantView):
     """
 
     requires_auth = False
+    # Set by each view
+    url: str
 
     def __init__(self, entry_id: str) -> None:
         """Init the IPX push view."""
