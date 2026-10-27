@@ -198,13 +198,10 @@ class IpxConfigFlow(ConfigFlow, domain=DOMAIN):
                     },
                 )
 
-        return self.async_show_form(
-            step_id=step_id,
-            data_schema=self.add_suggested_values_to_schema(
-                schema, user_input or config
-            ),
-            errors=errors,
-        )
+        if self.source != SOURCE_REAUTH:
+            # The rejected API key is not suggested
+            schema = self.add_suggested_values_to_schema(schema, user_input or config)
+        return self.async_show_form(step_id=step_id, data_schema=schema, errors=errors)
 
     @staticmethod
     @callback

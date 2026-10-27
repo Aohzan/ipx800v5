@@ -1,5 +1,7 @@
 """Tests of the config flow of the GCE IPX800 V5 integration."""
 
+from typing import Any
+
 from pypx800v5 import (
     IPX800CannotConnectError,
     IPX800InvalidAuthError,
@@ -18,7 +20,7 @@ from custom_components.ipx800v5.const import (
     CONF_PUSH_PASSWORD,
     DOMAIN,
 )
-from homeassistant.config_entries import SOURCE_IMPORT, SOURCE_USER
+from homeassistant.config_entries import SOURCE_IMPORT, SOURCE_USER, ConfigFlowResult
 from homeassistant.const import (
     CONF_API_KEY,
     CONF_HOST,
@@ -46,6 +48,15 @@ PARAMS_INPUT = {
     **{f"x8r_0_{relay}": "switch" for relay in range(1, 9)},
     "x8r_0_2": "light",
 }
+
+
+def _suggested_values(result: ConfigFlowResult) -> dict[str, Any]:
+    """Return the values suggested by a form."""
+    return {
+        str(key): key.description["suggested_value"]
+        for key in result["data_schema"].schema
+        if key.description and "suggested_value" in key.description
+    }
 
 
 async def test_user_flow(hass: HomeAssistant, mock_ipx: FakeIpxApi) -> None:
@@ -233,12 +244,14 @@ async def test_reauth_flow(
 
     result = await mock_config_entry.start_reauth_flow(hass)
     assert result["step_id"] == "reauth_confirm"
+    assert _suggested_values(result) == {}
 
     mock_ipx.error = IPX800InvalidAuthError()
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], {CONF_API_KEY: "wrong"}
     )
     assert result["errors"] == {"base": "invalid_auth"}
+    assert _suggested_values(result) == {}
 
     mock_ipx.error = None
     result = await hass.config_entries.flow.async_configure(
@@ -272,6 +285,7 @@ async def test_reconfigure_flow(
 
     result = await mock_config_entry.start_reconfigure_flow(hass)
     assert result["step_id"] == "reconfigure"
+    assert _suggested_values(result) == {CONF_HOST: HOST, CONF_PORT: PORT}
 
     mock_ipx.error = RuntimeError()
     result = await hass.config_entries.flow.async_configure(
