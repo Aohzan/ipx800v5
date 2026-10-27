@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.3.0](https://github.com/Aohzan/ipx800v5/compare/2.2.0...2.3.0) (2026-10-27)
+
+### Features
+
+* modernize the integration for Home Assistant 2026.10 ([cc8e679](https://github.com/Aohzan/ipx800v5/commit/cc8e679cf19c2bd2e2d9779061acc8e2194321a4))
+* ship the brand images with the integration ([e1e8591](https://github.com/Aohzan/ipx800v5/commit/e1e859113caaba1648853e0fc90558f0a39043e8))
+
+### Bug Fixes
+
+* don't suggest the rejected API key in the reauthentication form ([60ff307](https://github.com/Aohzan/ipx800v5/commit/60ff30732115ada4904939cd473932e0fda60800))
+* handle an unreachable IPX800 in the configuration and options ([8ea663a](https://github.com/Aohzan/ipx800v5/commit/8ea663a73c0aa7249e71d132fecfa7d5865fa96e))
+* keep the legacy friendly names of the entities named after their device ([38e9439](https://github.com/Aohzan/ipx800v5/commit/38e94392cda7097473eea47b1218efa129157efb))
+* refuse to reconfigure an entry to another IPX800 ([3d0c995](https://github.com/Aohzan/ipx800v5/commit/3d0c995b71718797c994136a2c8a2782b8686d6f))
+* show an unknown error on unexpected errors in the user and options flows ([c4efe35](https://github.com/Aohzan/ipx800v5/commit/c4efe3533a060b80a8bdf1c544223e1fb73e18fe))
+* translate the relay type fields of the X-8R extensions ([0756049](https://github.com/Aohzan/ipx800v5/commit/075604931d785f3fd061d3c390bb5c62d2928319))
+
 ## [2.2.0](https://github.com/Aohzan/ipx800v5/compare/2.1.1...2.2.0) (2026-10-13)
 
 ### Features
