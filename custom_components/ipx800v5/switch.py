@@ -74,21 +74,21 @@ class IOSwitch(IpxEntity, SwitchEntity):
     @property
     def is_on(self) -> bool:
         """Return the current value."""
-        return self.coordinator.data[self._io_id]["on"] is True  # type: ignore[index]
+        return self.coordinator.data[self.io_id]["on"] is True
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the switch."""
-        await self.ipx.update_io(self._io_id, True)
+        await self.ipx.update_io(self.io_id, True)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the switch."""
-        await self.ipx.update_io(self._io_id, False)
+        await self.ipx.update_io(self.io_id, False)
         await self.coordinator.async_request_refresh()
 
     async def async_toggle(self, **kwargs: Any) -> None:
         """Toggle the switch."""
-        await self.ipx.update_io(self._io_id, True, "toggle")
+        await self.ipx.update_io(self.io_id, True, "toggle")
         await self.coordinator.async_request_refresh()
 
 
@@ -103,7 +103,7 @@ class IpxSwitch(IpxEntity, SwitchEntity):
     ) -> None:
         """Initialize the RelaySwitch."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = IPX800Relay(ipx, self._io_number)
+        self.control = IPX800Relay(ipx, self.io_number)
 
     @property
     def is_on(self) -> bool:
@@ -137,7 +137,7 @@ class IpxOpenCollSwitch(IpxEntity, SwitchEntity):
     ) -> None:
         """Initialize the RelaySwitch."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = IPX800OpenColl(ipx, self._io_number)
+        self.control = IPX800OpenColl(ipx, self.io_number)
 
     @property
     def is_on(self) -> bool:
@@ -171,7 +171,7 @@ class X8RSwitch(IpxEntity, SwitchEntity):
     ) -> None:
         """Initialize the RelaySwitch."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = X8R(ipx, self._ext_number, self._io_number)
+        self.control = X8R(ipx, self._ext_number, self.io_number)
 
     @property
     def is_on(self) -> bool:

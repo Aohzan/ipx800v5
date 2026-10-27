@@ -94,12 +94,14 @@ class IpxEntity(CoordinatorEntity[IpxCoordinator]):
         )
         self._component: str = device_config[CONF_COMPONENT]
         self._ext_type: str = device_config[CONF_EXT_TYPE]
-        self._ext_number: int | None = device_config.get(CONF_EXT_NUMBER)
+        # Defaults to 0 in the configuration schema, always set otherwise
+        self._ext_number: int = device_config[CONF_EXT_NUMBER]
         self._io_number: int | None = device_config.get(CONF_IO_NUMBER)
         self._io_numbers: list[int] = device_config.get(CONF_IO_NUMBERS, [])
         self._io_id: int | None = device_config.get(CONF_ID)
 
         name: str = device_config[CONF_NAME]
+        self._config_name = name
         full_name = f"{name} {suffix_name}" if suffix_name else name
         # Only override the defaults set by the entity classes when configured
         if (device_class := device_config.get(CONF_DEVICE_CLASS)) is not None:
@@ -173,6 +175,26 @@ class IpxEntity(CoordinatorEntity[IpxCoordinator]):
             suffix_name,
             translation_key or device_config.get(CONF_TRANSLATION_KEY),
         )
+
+    @property
+    def io_number(self) -> int:
+        """Return the IO number, required by the entities of an IO."""
+        if self._io_number is None:
+            raise ValueError(
+                f"{CONF_IO_NUMBER} is required by the {self._component}"
+                f" {self._config_name} of the IPX800 configuration"
+            )
+        return self._io_number
+
+    @property
+    def io_id(self) -> int:
+        """Return the IPX800 value ID, required by the IO and analog entities."""
+        if self._io_id is None:
+            raise ValueError(
+                f"{CONF_ID} is required by the {self._component}"
+                f" {self._config_name} of the IPX800 configuration"
+            )
+        return self._io_id
 
     def _set_name(
         self,

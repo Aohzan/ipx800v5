@@ -105,7 +105,7 @@ class IpxLight(IpxEntity, LightEntity):
     ) -> None:
         """Initialize the RelayLight."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = IPX800Relay(ipx, self._io_number)
+        self.control = IPX800Relay(ipx, self.io_number)
 
     @property
     def is_on(self) -> bool:
@@ -142,7 +142,7 @@ class X8RLight(IpxEntity, LightEntity):
     ) -> None:
         """Initialize the RelayLight."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = X8R(ipx, self._ext_number, self._io_number)
+        self.control = X8R(ipx, self._ext_number, self.io_number)
 
     @property
     def is_on(self) -> bool:
@@ -179,7 +179,7 @@ class XDimmerLight(IpxEntity, LightEntity):
     ) -> None:
         """Initialize the class XDimmerLight."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = XDimmer(ipx, self._ext_number, self._io_number)
+        self.control = XDimmer(ipx, self._ext_number, self.io_number)
         self._transition = device_config.get(CONF_TRANSITION, DEFAULT_TRANSITION)
 
     @property
@@ -229,7 +229,7 @@ class XPWMLight(IpxEntity, LightEntity):
     ) -> None:
         """Initialize the XPWMLight."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = XPWM(ipx, self._ext_number, self._io_number)
+        self.control = XPWM(ipx, self._ext_number, self.io_number)
 
         self._default_brightness = scaleto100(
             device_config.get(CONF_DEFAULT_BRIGHTNESS, 255)
@@ -517,7 +517,7 @@ class X010VLight(IpxEntity, LightEntity):
     ) -> None:
         """Initialize the class XDimmerLight."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = X010V(ipx, self._ext_number, self._io_number)
+        self.control = X010V(ipx, self._ext_number, self.io_number)
 
     @property
     def is_on(self) -> bool:

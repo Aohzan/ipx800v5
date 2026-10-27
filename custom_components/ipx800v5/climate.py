@@ -97,7 +97,7 @@ class X4FPClimate(IpxEntity, ClimateEntity):
     ) -> None:
         """Initialize the X4FPClimate."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = X4FP(ipx, self._ext_number, self._io_number)
+        self.control = X4FP(ipx, self._ext_number, self.io_number)
 
     @property
     def _mode(self) -> X4FPMode:
@@ -154,7 +154,7 @@ class X4FPClimate(IpxEntity, ClimateEntity):
             f"{PRESET_COMFORT} -1": X4FPMode.COMFORT_1,
             f"{PRESET_COMFORT} -2": X4FPMode.COMFORT_2,
         }
-        await self.control.set_mode(switcher.get(preset_mode))
+        await self.control.set_mode(switcher[preset_mode])
         await self.coordinator.async_request_refresh()
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:

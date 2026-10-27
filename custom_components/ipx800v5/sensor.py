@@ -150,7 +150,7 @@ class AnalogSensor(IpxEntity, SensorEntity):
     @property
     def native_value(self) -> float:
         """Return the current value."""
-        return self.coordinator.data[self._io_id]["value"]  # type: ignore[index]
+        return self.coordinator.data[self.io_id]["value"]
 
 
 class IpxAnalogInputSensor(IpxEntity, SensorEntity):
@@ -163,7 +163,7 @@ class IpxAnalogInputSensor(IpxEntity, SensorEntity):
     ) -> None:
         """Initialize the analog input sensor of the IPX800."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = IPX800AnalogInput(ipx, self._io_number)
+        self.control = IPX800AnalogInput(ipx, self.io_number)
 
     @property
     def native_value(self) -> float:
@@ -221,7 +221,7 @@ class X400Sensor(IpxEntity, SensorEntity):
     ) -> None:
         """Initialize the X-400 sensor."""
         super().__init__(device_config, ipx, coordinator)
-        self.control = X400(ipx, self._ext_number, self._io_number)
+        self.control = X400(ipx, self._ext_number, self.io_number)
         if self.control.is_current_clamp:
             self._attr_device_class = SensorDeviceClass.CURRENT
             self._attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
