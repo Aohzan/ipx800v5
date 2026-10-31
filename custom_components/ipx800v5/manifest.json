@@ -1,15 +1,25 @@
 {
   "domain": "ipx800v5",
   "name": "GCE IPX800 V5",
-  "categories": ["hubs_protocols.building_automation"],
-  "codeowners": ["@Aohzan"],
+  "categories": [
+    "hubs_protocols.building_automation"
+  ],
+  "codeowners": [
+    "@Aohzan"
+  ],
   "config_flow": true,
-  "dependencies": ["http"],
+  "dependencies": [
+    "http"
+  ],
   "documentation": "https://github.com/Aohzan/ipx800v5",
   "integration_type": "hub",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/Aohzan/ipx800v5/issues",
-  "loggers": ["pypx800v5"],
-  "requirements": ["pypx800v5==1.5.0"],
-  "version": "2.2.0"
+  "loggers": [
+    "pypx800v5"
+  ],
+  "requirements": [
+    "pypx800v5==1.5.0"
+  ],
+  "version": "2.3.0"
 }
