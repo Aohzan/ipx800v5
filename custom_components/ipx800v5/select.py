@@ -8,7 +8,7 @@ from pypx800v5 import EXT_XDISPLAY, IPX800, XDisplay
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import CONF_EXT_TYPE
@@ -97,3 +97,8 @@ class XDisplayScreenSelect(IpxEntity, SelectEntity):
         """Call when entity is added to hass."""
         await self.control.refresh_screens()
         await super().async_added_to_hass()
+
+    @callback
+    def async_entity_id_changed(self, old_entity_id: str) -> None:
+        """Keep the entity on an entity ID change, the screens are kept."""
+        super().async_entity_id_changed(old_entity_id)

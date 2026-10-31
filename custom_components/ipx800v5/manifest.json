@@ -1,6 +1,9 @@
 {
   "domain": "ipx800v5",
   "name": "GCE IPX800 V5",
+  "categories": [
+    "hubs_protocols.building_automation"
+  ],
   "codeowners": [
     "@Aohzan"
   ],
