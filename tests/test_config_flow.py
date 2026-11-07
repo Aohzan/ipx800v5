@@ -8,7 +8,7 @@ from pypx800v5 import (
     IPX800RequestError,
 )
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.ipx800v5.const import (
     CONF_COMPONENT,

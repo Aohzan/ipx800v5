@@ -7,9 +7,7 @@ from unittest.mock import patch
 
 from pypx800v5 import IPX800
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
-from pytest_homeassistant_custom_component.syrupy import HomeAssistantSnapshotExtension
-from syrupy.assertion import SnapshotAssertion
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.ipx800v5.const import (
     CONF_COMPONENT,
@@ -307,17 +305,6 @@ class FakeIpxApi:
             case ["core", "str", str_id]:
                 return {"value": self.strings[int(str_id)]}
         raise AssertionError(f"Unexpected request {path}")
-
-
-@pytest.fixture
-def snapshot(snapshot: SnapshotAssertion) -> SnapshotAssertion:
-    """Return the snapshot assertion with the Home Assistant serializer."""
-    return snapshot.use_extension(HomeAssistantSnapshotExtension)
-
-
-@pytest.fixture(autouse=True)
-def auto_enable_custom_integrations(enable_custom_integrations: None) -> None:
-    """Enable the custom integrations in every test."""
 
 
 @pytest.fixture
