@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.0](https://github.com/Aohzan/ipx800v5/compare/2.3.0...2.4.0) (2026-11-07)
+
+### Features
+
+* keep the X-Display screen select on an entity ID change ([bebd92d](https://github.com/Aohzan/ipx800v5/commit/bebd92d1472e288ed352fd1d59984ab887f47cb1))
+* require Home Assistant 2026.11 ([db9e386](https://github.com/Aohzan/ipx800v5/commit/db9e3862ad02304e3a8bb9ed2392ff4fd283db63))
+
 ## [2.3.0](https://github.com/Aohzan/ipx800v5/compare/2.2.0...2.3.0) (2026-10-27)
 
 ### Features
