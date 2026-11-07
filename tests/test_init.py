@@ -3,7 +3,7 @@
 from freezegun.api import FrozenDateTimeFactory
 from pypx800v5 import IPX800CannotConnectError, IPX800InvalidAuthError
 import pytest
-from pytest_homeassistant_custom_component.common import (
+from pytest_homeassistant.common import (
     MockConfigEntry,
     async_fire_time_changed,
 )
