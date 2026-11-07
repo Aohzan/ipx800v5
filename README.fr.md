@@ -1,6 +1,6 @@
 # Intégration ipx800v5 pour Home Assistant
 
-![GitHub release (with filter)](https://img.shields.io/github/v/release/aohzan/ipx800v5) ![GitHub](https://img.shields.io/github/license/aohzan/ipx800v5) [![Donate](https://img.shields.io/badge/$-support-ff69b4.svg?style=flat)](https://github.com/sponsors/Aohzan) [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
+![GitHub release (with filter)](https://img.shields.io/github/v/release/aohzan/ipx800v5) ![GitHub](https://img.shields.io/github/license/aohzan/ipx800v5) [![Donate](https://img.shields.io/badge/$-support-ff69b4.svg?style=flat)](https://github.com/sponsors/Aohzan) [![Marketplace](https://img.shields.io/badge/Marketplace-Default-41BDF5.svg)](https://www.home-assistant.io/integrations/marketplace/)
 
 Ceci est un _custom component_ ou une intégration pour [Home Assistant](https://www.home-assistant.io/).
 L'intégration `ipx800v5` vous permet de contrôler et récupérer des informations depuis votre [IPX800 v5 et ses extensions](http://gce-electronics.com/).
@@ -39,11 +39,13 @@ L'intégration `ipx800v5` vous permet de contrôler et récupérer des informati
 
 ## Installation
 
-### HACS
+### Marketplace
 
-HACS > Intégrations > Explorer & Ajouter des repos > GCE IPX800 V5 > Installer ce repository
+[![Ouvrir ce dépôt dans le Marketplace de votre Home Assistant.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=Aohzan&repository=ipx800v5&category=integration)
 
-### Manually
+Paramètres > Marketplace > rechercher « GCE IPX800 V5 » > Installer.
+
+### Manuellement
 
 Copiez le répertoire  `custom_components/ipx800v5` dans le répertoire `config/custom_components` de votre Home Assistant (les fichiers `*.py` doivent être dans `config/custom_components/ipx800v5`).
 
@@ -51,7 +53,9 @@ Copiez le répertoire  `custom_components/ipx800v5` dans le répertoire `config/
 
 ### Simple
 
-Depuis le menu `Configuration` puis `Intégrations` ajouter GCE IPX800V5 via le bouton puis suivez les instructions.
+[![Ajouter cette intégration à votre Home Assistant.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=ipx800v5)
+
+Ou depuis Paramètres > Appareils et services > Ajouter une intégration, sélectionner GCE IPX800 V5. Suivez ensuite les instructions.
 
 ### Avancé
 
