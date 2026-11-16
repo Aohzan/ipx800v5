@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.4.1](https://github.com/Aohzan/ipx800v5/compare/2.4.0...2.4.1) (2026-11-16)
+
+### Bug Fixes
+
+* show the commanded light levels until the ipx800 reports them ([#46](https://github.com/Aohzan/ipx800v5/issues/46)) ([768e77b](https://github.com/Aohzan/ipx800v5/commit/768e77b0a2abecc1e868e7e78f909470f055a4f9))
+
 ## [2.4.0](https://github.com/Aohzan/ipx800v5/compare/2.3.0...2.4.0) (2026-11-07)
 
 ### Features
