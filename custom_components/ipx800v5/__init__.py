@@ -42,7 +42,6 @@ from .const import (
     CONF_IO_NUMBERS,
     CONF_PUSH_PASSWORD,
     CONF_TRANSITION,
-    DEFAULT_TRANSITION,
     DOMAIN,
     PLATFORMS,
     PUSH_VIEWS,
@@ -52,24 +51,25 @@ from .request_views import IpxRequestDataView, IpxRequestRefreshView, IpxRequest
 
 _LOGGER = logging.getLogger(__name__)
 
-IPX800_DEVICES_SCHEMA = probatio.Schema(
-    {
-        probatio.Required(CONF_NAME): cv.string,
-        probatio.Required(CONF_COMPONENT): cv.string,
-        probatio.Required(CONF_EXT_TYPE): cv.string,
-        probatio.Optional(CONF_EXT_NUMBER, default=0): cv.positive_int,
-        probatio.Optional(CONF_TYPE): cv.string,
-        probatio.Optional(CONF_IO_NUMBER): cv.positive_int,
-        probatio.Optional(CONF_IO_NUMBERS): cv.ensure_list,
-        probatio.Optional(CONF_DEFAULT_BRIGHTNESS): cv.positive_int,
-        probatio.Optional(CONF_ID): cv.positive_int,
-        probatio.Optional(CONF_ICON): cv.icon,
-        probatio.Optional(CONF_TRANSITION, default=DEFAULT_TRANSITION): probatio.Coerce(
-            float
-        ),
-        probatio.Optional(CONF_DEVICE_CLASS): cv.string,
-        probatio.Optional(CONF_UNIT_OF_MEASUREMENT): cv.string,
-    }
+IPX800_DEVICES_SCHEMA = probatio.All(
+    # The IPX800 V5 API has no transition: the speed is set on the extension
+    cv.removed(CONF_TRANSITION, raise_if_present=False),
+    probatio.Schema(
+        {
+            probatio.Required(CONF_NAME): cv.string,
+            probatio.Required(CONF_COMPONENT): cv.string,
+            probatio.Required(CONF_EXT_TYPE): cv.string,
+            probatio.Optional(CONF_EXT_NUMBER, default=0): cv.positive_int,
+            probatio.Optional(CONF_TYPE): cv.string,
+            probatio.Optional(CONF_IO_NUMBER): cv.positive_int,
+            probatio.Optional(CONF_IO_NUMBERS): cv.ensure_list,
+            probatio.Optional(CONF_DEFAULT_BRIGHTNESS): cv.positive_int,
+            probatio.Optional(CONF_ID): cv.positive_int,
+            probatio.Optional(CONF_ICON): cv.icon,
+            probatio.Optional(CONF_DEVICE_CLASS): cv.string,
+            probatio.Optional(CONF_UNIT_OF_MEASUREMENT): cv.string,
+        }
+    ),
 )
 
 IPX800_SCHEMA = probatio.Schema(

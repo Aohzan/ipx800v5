@@ -95,7 +95,6 @@ Ajoutez votre configuration `ipx800v5` dans votre fichier `configuration.yaml`.
 | `io_numbers`   | array[int] | no       | -       | Numéros des entrées/sorties concernées (pour `climate` et `xpwm_rgb`)                |
 | `icon`         | string     | no       | -       | Icône                                                                                |
 | `device_class` | string     | no       | -       | Device class                                                                         |
-| `transition`   | int        | no       | -       | Sans effet, l'API de l'IPX800 V5 ne gère pas de délai de changement d'état           |
 | `type`         | string     | no       | -       | Type d'entité spécifique  [voir les possibilités](#Fonctionnalités)                  |
 | `max_temp`     | float      | no       | 22      | Température maximale (pour thermostat uniquement)                                     |
 | `target_temp_step` | float  | no       | 0.5     | Pas de réglage de la température (pour thermostat uniquement)                        |
@@ -216,7 +215,7 @@ ipx800v5:
         ext_number: 0
         component: binary_sensor
         device_class: motion
-      ## climate avec diode fil pilote 
+      ## climate avec diode fil pilote
       - name: Sèche-Serviettes Salle de bains
         component: climate
         ext_type: ipx
