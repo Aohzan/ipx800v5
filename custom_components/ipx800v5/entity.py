@@ -26,9 +26,7 @@ from .const import (
     CONF_EXT_TYPE,
     CONF_IO_NUMBER,
     CONF_IO_NUMBERS,
-    CONF_TRANSITION,
     CONF_TRANSLATION_KEY,
-    DEFAULT_TRANSITION,
     DOMAIN,
 )
 from .coordinator import IpxCoordinator
@@ -89,9 +87,6 @@ class IpxEntity(CoordinatorEntity[IpxCoordinator]):
         super().__init__(coordinator)
 
         self.ipx = ipx
-        self._transition = int(
-            device_config.get(CONF_TRANSITION, DEFAULT_TRANSITION) * 1000
-        )
         self._component: str = device_config[CONF_COMPONENT]
         self._ext_type: str = device_config[CONF_EXT_TYPE]
         # Defaults to 0 in the configuration schema, always set otherwise
