@@ -40,7 +40,9 @@ from .const import (
     CONF_EXT_TYPE,
     CONF_IO_NUMBER,
     CONF_IO_NUMBERS,
+    CONF_MAX_TEMP,
     CONF_PUSH_PASSWORD,
+    CONF_TARGET_TEMP_STEP,
     CONF_TRANSITION,
     DOMAIN,
     PLATFORMS,
@@ -68,6 +70,9 @@ IPX800_DEVICES_SCHEMA = probatio.All(
             probatio.Optional(CONF_ICON): cv.icon,
             probatio.Optional(CONF_DEVICE_CLASS): cv.string,
             probatio.Optional(CONF_UNIT_OF_MEASUREMENT): cv.string,
+            # Thermostat only, min_temp is the no frost setpoint of the IPX800
+            probatio.Optional(CONF_MAX_TEMP): probatio.Coerce(float),
+            probatio.Optional(CONF_TARGET_TEMP_STEP): probatio.Coerce(float),
         }
     ),
 )
