@@ -71,8 +71,8 @@ IPX800_DEVICES_SCHEMA = probatio.All(
             probatio.Optional(CONF_DEVICE_CLASS): cv.string,
             probatio.Optional(CONF_UNIT_OF_MEASUREMENT): cv.string,
             # Thermostat only, min_temp is the no frost setpoint of the IPX800
-            probatio.Optional(CONF_MAX_TEMP): probatio.Coerce(float),
-            probatio.Optional(CONF_TARGET_TEMP_STEP): probatio.Coerce(float),
+            probatio.Optional(CONF_MAX_TEMP): cv.positive_float,
+            probatio.Optional(CONF_TARGET_TEMP_STEP): cv.positive_float,
         }
     ),
 )
