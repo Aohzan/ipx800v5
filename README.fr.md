@@ -101,6 +101,8 @@ Ajoutez votre configuration `ipx800v5` dans votre fichier `configuration.yaml`.
 
 **Note pour les thermostats** : `min_temp` n'est **pas configurable** car il est toujours synchronisé avec la valeur **NoFrost** (hors gel) configurée dans l'IPX800 pour des raisons de sécurité. Seuls `max_temp` et `target_temp_step` peuvent être personnalisés.
 
+Pour personnaliser un thermostat sans perdre ses entités annexes (capteur *Défaut*, switch *Mode refroidissement*, températures *Confort*, *Éco* et *Hors-gel*), gardez `thermostat` dans `devices_auto` et déclarez-le aussi dans `devices` avec le même `ext_number` : la déclaration manuelle remplace alors l'entité `climate` automatique, sans doublon. Utilisez comme `name` le nom de l'objet dans l'IPX800, sinon les identifiants des entités existantes changent. Un thermostat déclaré dans `devices` mais absent de `devices_auto` n'a que son entité `climate`.
+
 **Mode refroidissement** : le switch *Cooling Mode* (catégorie configuration) active le mode inversé du thermostat dans l'IPX800 : la sortie est active quand la température dépasse la consigne, pour piloter un appareil de refroidissement. Le thermostat passe alors en mode `cool`, avec une température minimale de 7 °C et une maximale de 35 °C (ou `max_temp` si défini).
 
 #### Exemple
@@ -202,6 +204,7 @@ ipx800v5:
         # min_temp est lu automatiquement depuis NoFrost (IPX800)
         # max_temp et target_temp_step utilisent les valeurs par défaut (22°C, 0.5°C)
       ## objet thermostat avec paramètres personnalisés
+      ## (thermostat reste dans devices_auto, name = nom de l'objet dans l'IPX800)
       - name: Thermostat Salle de bain
         component: climate
         ext_type: thermostat
