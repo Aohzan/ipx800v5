@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.4.2](https://github.com/Aohzan/ipx800v5/compare/2.4.1...2.4.2) (2026-11-24)
+
+### Bug Fixes
+
+* accept max_temp and target_temp_step in the thermostat configuration ([#48](https://github.com/Aohzan/ipx800v5/issues/48)) ([c8bef8e](https://github.com/Aohzan/ipx800v5/commit/c8bef8eb8a554e3b27dd8b6174b833b7c4c9a5df))
+
 ## [2.4.1](https://github.com/Aohzan/ipx800v5/compare/2.4.0...2.4.1) (2026-11-16)
 
 ### Bug Fixes
